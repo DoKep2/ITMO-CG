@@ -12,9 +12,9 @@ struct PS_IN
 
 cbuffer cbPerObject : register(b0)
 {
-    float xOffset;
-    float yOffset;
-    float4x4 mat;
+    float4x4 world;
+    float4x4 view;
+    float4x4 projection;
 };
 
 Texture2D objTexture : TEXTURE : register(t0);
@@ -23,11 +23,11 @@ SamplerState objSamplerState : SAMPLER : register(s0);
 PS_IN VSMain(VS_IN input)
 {
     PS_IN output = (PS_IN) 0;
-	
-    input.pos.x += xOffset;
-    input.pos.y += yOffset;
-    input.pos = mul(input.pos, mat);
-	
+
+    input.pos = mul(input.pos, world);
+    input.pos = mul(input.pos, view);
+    input.pos = mul(input.pos, projection);
+
     output.pos = input.pos;
     output.inTexCoord = input.inTexCoord;
 	

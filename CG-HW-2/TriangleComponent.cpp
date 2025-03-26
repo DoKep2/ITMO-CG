@@ -3,31 +3,18 @@
 //
 
 #include "TriangleComponent.h"
+#include "SimpleMath.h"
 #include "Game.h"
 #include <d3dcompiler.h>
 #include <iostream>
 
-using namespace DirectX;
-
-TriangleComponent::TriangleComponent(Game* g) : GameComponent(g), offset(), mat(XMMatrixIdentity())
+TriangleComponent::TriangleComponent(Game* g) : GameComponent(g)
 {
-	/*Vertex v[] = {
-		Vertex(-0.5f, -0.5f, 1.0f, 0.0f, 1.0f),
-		Vertex(0.0f, 0.5f, 1.0f, 0.5f, 0.0f),
-		Vertex(0.5f, -0.5f, 1.0f, 1.0f, 1.0f)
-	};*/
-	DirectX::XMFLOAT4 pointsTmp[6] = {
-		DirectX::XMFLOAT4(0.0f, 0.5f, 0.5f, 1.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
-		DirectX::XMFLOAT4(-0.5f, 0.0f, 0.5f, 1.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
-		DirectX::XMFLOAT4(0.5f, 0.0f, 0.5f, 1.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
-	};
-
-	//std::swap(points_, v);
-	std::swap(points_, pointsTmp);
 }
 
 TriangleComponent::~TriangleComponent()
 {
+	DestroyResources();
 }
 
 void TriangleComponent::DestroyResources() {
@@ -39,6 +26,7 @@ void TriangleComponent::DestroyResources() {
 	vertexShaderByteCode_->Release();
 	vb_->Release();
 	ib_->Release();
+	constBuffer->Release();
 }
 
 
@@ -60,18 +48,8 @@ void TriangleComponent::Draw() {
 	game->Context->IASetIndexBuffer(ib_, DXGI_FORMAT_R32_UINT, 0);
 	game->Context->IASetVertexBuffers(0, 1, &vb_, strides_, offsets_);
 	game->Context->VSSetShader(vertexShader_, nullptr, 0);
+	game->Context->VSSetConstantBuffers(0, 1, &constBuffer);
 	game->Context->PSSetShader(pixelShader_, nullptr, 0);
-	//game->Context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
-
-	// constantBuffer.data.xOffset = offset.x;
-	// constantBuffer.data.yOffset = offset.y;
-	constantBuffer.data.world = mat;
-	constantBuffer.data.world = DirectX::XMMatrixTranspose(constantBuffer.data.world);
-	if (!constantBuffer.ApplyChanges())
-	{
-		return;
-	}
-	game->Context->VSSetConstantBuffers(0, 1, this->constantBuffer.GetAddressOf());
 
 	game->Context->DrawIndexed(6, 0, 0);
 }
@@ -79,8 +57,7 @@ void TriangleComponent::Draw() {
 void TriangleComponent::Initialize() {
 	ID3DBlob* errorVertexCode = nullptr;
 
-	//auto res = D3DCompileFromFile(L"C:\\Users\\sergo\\Downloads\\TextureShader.hlsl",
-	auto res = D3DCompileFromFile(L"C:\\Users\\sergo\\Downloads\\MyVeryFirstShader.hlsl",
+	auto res = D3DCompileFromFile(L"..\\MyVeryFirstShader.hlsl",
 		nullptr,
 		nullptr,
 		"VSMain",
@@ -107,10 +84,9 @@ void TriangleComponent::Initialize() {
 	}
 
 	D3D_SHADER_MACRO Shader_Macros[] = { "TEST", "1", "TCOLOR", "float4(0.0f, 1.0f, 0.0f, 1.0f)", nullptr, nullptr };
-    //D3D_SHADER_MACRO Shader_Macros[] = {{ "TEXCOORD", "float2" }, { nullptr, nullptr }};
+
 	ID3DBlob* errorPixelCode;
-	res = D3DCompileFromFile(L"C:\\Users\\sergo\\Downloads\\MyVeryFirstShader.hlsl",
-	//res = D3DCompileFromFile(L"C:\\Users\\sergo\\Downloads\\TextureShader.hlsl",
+	res = D3DCompileFromFile(L"..\\MyVeryFirstShader.hlsl",
 		Shader_Macros,
 		nullptr,
 		"PSMain",
@@ -156,25 +132,30 @@ void TriangleComponent::Initialize() {
 		vertexShaderByteCode_->GetBufferSize(),
 		&layout_);
 
+	DirectX::XMFLOAT4 points[8] = {
+	DirectX::XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f),	DirectX::XMFLOAT4(0.2f, 0.0f, 0.0f, 1.0f),
+	DirectX::XMFLOAT4(-0.1f, -0.1f, 0.1f, 1.0f),	DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),
+	DirectX::XMFLOAT4(0.1f, -0.1f, 0.1f, 1.0f),	DirectX::XMFLOAT4(0.0f, 0.2f, 0.0f, 1.0f),
+	//DirectX::XMFLOAT4(-0.5f, 0.5f, 0.5f, 1.0f),	DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f),
+	};
+
 	D3D11_BUFFER_DESC vertexBufDesc = {};
-	//vertexBufDesc.Usage = D3D11_USAGE_DEFAULT;
-	vertexBufDesc.Usage = D3D11_USAGE_DYNAMIC;
+	vertexBufDesc.Usage = D3D11_USAGE_DEFAULT;
 	vertexBufDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	//vertexBufDesc.CPUAccessFlags = 0;
-	vertexBufDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	vertexBufDesc.CPUAccessFlags = 0;
 	vertexBufDesc.MiscFlags = 0;
 	vertexBufDesc.StructureByteStride = 0;
-	vertexBufDesc.ByteWidth = sizeof(DirectX::XMFLOAT4) * std::size(points_);
+	vertexBufDesc.ByteWidth = sizeof(DirectX::XMFLOAT4) * std::size(points);
 
 	D3D11_SUBRESOURCE_DATA vertexData = {};
-	vertexData.pSysMem = points_;
+	vertexData.pSysMem = points;
 	vertexData.SysMemPitch = 0;
 	vertexData.SysMemSlicePitch = 0;
 
 
 	game->Device->CreateBuffer(&vertexBufDesc, &vertexData, &vb_);
-	//int indeces[] = { 0,1,2 };
-	int indeces[] = { 0,1,2, 0,1,3 };
+	int indeces[] = { 0,1,2 };
+	//int indeces[] = { 0,1,2, 0,1,3 };
 	D3D11_BUFFER_DESC indexBufDesc = {};
 	indexBufDesc.Usage = D3D11_USAGE_DEFAULT;
 	indexBufDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
@@ -193,72 +174,36 @@ void TriangleComponent::Initialize() {
 	strides_[0] = 32;
 	offsets_[0] = 0;
 
-	HRESULT hr = this->constantBuffer.Initialize(game->Device.Get(), game->Context);
-	if (FAILED(hr))
-	{
-		return;
-	}
+	D3D11_BUFFER_DESC constBufDesc = {};
+	constBufDesc.Usage = D3D11_USAGE_DEFAULT;
+	constBufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	constBufDesc.CPUAccessFlags = 0;
+	constBufDesc.MiscFlags = 0;
+	constBufDesc.StructureByteStride = 0;
+	constBufDesc.ByteWidth = sizeof(DirectX::SimpleMath::Vector4);
+
+	game->Device->CreateBuffer(&constBufDesc, nullptr, &constBuffer);
 
 	CD3D11_RASTERIZER_DESC rastDesc = {};
 	rastDesc.CullMode = D3D11_CULL_NONE;
 	rastDesc.FillMode = D3D11_FILL_SOLID;
 
 	res = game->Device->CreateRasterizerState(&rastDesc, &rastState_);
-
-	//D3D11_SAMPLER_DESC sampDesc;
-	//ZeroMemory(&sampDesc, sizeof(sampDesc));
-	//sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	//sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	//sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	//sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-	//sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	//sampDesc.MinLOD = 0;
-	//sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-	//hr = game->Device->CreateSamplerState(&sampDesc, samplerState.GetAddressOf());
-	//if (FAILED(hr))
-	//{
-	//	return;
-	//}
 }
 
 void TriangleComponent::Update()
 {
-	/*D3D11_MAPPED_SUBRESOURCE mappedResource;
-	HRESULT hr = game->Context->Map(vb_, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	if (SUCCEEDED(hr))
-	{
-		memcpy(mappedResource.pData, points_, sizeof(points_));
-		game->Context->Unmap(vb_, 0);
-	}
-		
-	game->Context->UpdateSubresource(constBuffer_, 0, 0, &position_, 0, 0);*/
-	SetPosition(position_.x + velocity_.x, position_.y + velocity_.y);
-	game->Context->UpdateSubresource(constantBuffer.Get(), 0, 0, &position_, 0, 0);
-	game->Context->UpdateSubresource(constantBuffer.Get(), 0, 0, &constantBuffer.data, 0, 0);
+	// game->Context->UpdateSubresource(constBuffer, 0, 0, &offset, 0, 0);
 }
 
 void TriangleComponent::Reload()
 {
 }
 
-void TriangleComponent::SetPosition(float x, float y) {
-	offset.x = x;
-	offset.y = y;
-	position_.x = x;
-	position_.y = y;
+void TriangleComponent::MoveX(float x) {
+	// offset.x = x;
 }
 
-DirectX::SimpleMath::Vector4 TriangleComponent::GetPosition() const {
-	return offset;
-};
-
-void TriangleComponent::SetRotation(float angle)
-{
-	rotationAngle += angle;
-	mat = XMMatrixRotationZ(rotationAngle);
-}
-
-void TriangleComponent::SetVelocity(float x, float y) {
-	velocity_.x = x;
-	velocity_.y = y;
+void TriangleComponent::MoveY(float y) {
+	// offset.y = y;
 }

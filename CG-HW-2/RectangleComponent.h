@@ -23,7 +23,7 @@ protected:
 	ID3D11Buffer* constBuffer;
 	UINT strides[1];
 	UINT offsets[1];
-	DirectX::SimpleMath::Vector4 offset;
+	DirectX::XMMATRIX mat = DirectX::XMMatrixIdentity();
 public:
 	RectangleComponent(Game* g);
 	virtual ~RectangleComponent();
@@ -33,11 +33,7 @@ public:
 	void Update() override;
 	void Reload() override;
 	void SetPosition(float x, float y);
-	void SetPosition(DirectX::SimpleMath::Vector2 pos);
-	void SetY(float y);
-	void SetX(float x);
-	float GetX() const;
-	float GetY() const;
-	DirectX::SimpleMath::Vector2 GetPosition() const;
+
+	DirectX::XMFLOAT3 GetPosition() const;
 };
 

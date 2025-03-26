@@ -27,12 +27,10 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerState;
 	ID3D11ShaderResourceView* textureSRV;
 	int indices_[num * num * 6];
-	SimpleMath::Vector4 offset;
-	SimpleMath::Matrix mat = SimpleMath::Matrix::Identity;
+	XMMATRIX mat = XMMatrixIdentity();
 	float rotationAngle = 0.0f;
 	SimpleMath::Vector2 velocity_;
 	float orbitalVelocity;
-	XMFLOAT3 position_ = { 0.0f, 0.0f, 0.0f };
 	float orbitAngle_;
 	SphereComponent* orbitCenter_;
 	float orbitDistance_;
@@ -57,7 +55,10 @@ public:
 	void Reload() override;
 	void SetPosition(float x, float y, float z);
 	void SetRotation(float angle);
+	XMFLOAT3 GetPosition() const;
 	void RotateAround(SphereComponent* center, float distance, float angle);
+	void RotateAround(float x, float y, float z);
+	void UpdateWorldMatrix();
 	void BindCameraToSphere(SphereComponent* sphere);
 };
 

@@ -13,12 +13,11 @@ PongGame::PongGame() : Game(L"PongGame", 800, 800)
 {
 	firstPlayerRacket = new RacketComponent(this);
 	secondPlayerRacket = new RacketComponent(this);
-    firstPlayerRacket->SetPosition(-0.95f, 0.0f);
-    secondPlayerRacket->SetPosition(0.92f, 0.0f);
+	firstPlayerRacket->SetPosition(-0.95f, 0.0f);
+	secondPlayerRacket->SetPosition(0.92f, 0.0f);
 	ball = new BallComponent(this);
 	std::pair<float, float> dir = GenerateStartBallDirection();
 	ball->SetVelocity(dir.first, dir.second);
-	//ball->SetVelocity(0.015, -0.01);
 	Components.push_back(ball);
 	Components.push_back(firstPlayerRacket);
 	Components.push_back(secondPlayerRacket);
@@ -168,11 +167,40 @@ void PongGame::Update() {
             firstPlayerRacket->MoveUp(0.03);
         }
     }
+	if (this->InputDev->IsKeyDown(Keys::A)) {
+		if(firstPlayerRacket->GetPosition().x > -0.97f) {
+			firstPlayerRacket->MoveLeft(0.03f);
+		}
+	}
+
     if (this->InputDev->IsKeyDown(Keys::S)) {
         if (firstPlayerRacket->GetPosition().y > -1.0f) {
             firstPlayerRacket->MoveDown(0.03f);
         }
     }
+
+	if (this->InputDev->IsKeyDown(Keys::D)) {
+		if(firstPlayerRacket->GetPosition().x <= -0.05f) {
+			firstPlayerRacket->MoveRight(0.03f);
+		}
+	}
+
+	if (this->InputDev->IsKeyDown(Keys::Q)) {
+		firstPlayerRacket->Rotate(
+			-0.03f,
+			firstPlayerRacket->GetPosition().x + firstPlayerRacket->GetSize().x / 2,
+			firstPlayerRacket->GetPosition().y + firstPlayerRacket->GetSize().y / 2
+			);
+	}
+
+	if (this->InputDev->IsKeyDown(Keys::E)) {
+		firstPlayerRacket->Rotate(
+			0.03f,
+			firstPlayerRacket->GetPosition().x + firstPlayerRacket->GetSize().x / 2,
+			firstPlayerRacket->GetPosition().y + firstPlayerRacket->GetSize().y / 2
+			);
+	}
+
 
     #ifdef AI_PLAYERS
         auto racketPos = secondPlayerRacket->GetPosition();
@@ -194,6 +222,18 @@ void PongGame::Update() {
 			    secondPlayerRacket->MoveDown(0.03f);
 		    }
 	    }
+
+		if (this->InputDev->IsKeyDown(Keys::Left)) {
+			if(secondPlayerRacket->GetPosition().x >= 0.05f) {
+				secondPlayerRacket->MoveLeft(0.03f);
+			}
+		}
+
+	if (this->InputDev->IsKeyDown(Keys::Right)) {
+		if(secondPlayerRacket->GetPosition().x <= 0.92f) {
+			secondPlayerRacket->MoveRight(0.03f);
+		}
+	}
     #endif
 }
 

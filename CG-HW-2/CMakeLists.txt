@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 
 project(DirectXExample)
 
+add_compile_options(/utf-8)
 add_definitions(-D_MBCS)
 
 set(CMAKE_GENERATOR_PLATFORM x64)

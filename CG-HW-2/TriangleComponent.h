@@ -19,13 +19,13 @@ private:
     ID3D11VertexShader* vertexShader_;
     ID3DBlob* vertexShaderByteCode_; // ???
     int indices_[6];
+    DirectX::XMMATRIX mat = DirectX::XMMatrixIdentity();
 
     ID3D11Buffer* vb_;
     ID3D11Buffer* ib_;
     UINT strides_[1];
     UINT offsets_[1];
 
-    DirectX::SimpleMath::Vector4 offset;
     ID3D11Buffer* constBuffer;
 public:
     TriangleComponent(Game* g);

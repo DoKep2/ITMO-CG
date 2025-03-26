@@ -51,7 +51,7 @@ SphereComponent::SphereComponent(Game *g, std::wstring texturePath, float radius
 void SphereComponent::Initialize() {
     ID3DBlob *errorVertexCode = nullptr;
 
-    auto res = D3DCompileFromFile(L"C:\\Users\\sergo\\source\\repos\\CG-HW-3\\CG-HW-1\\TextureShader.hlsl",
+    auto res = D3DCompileFromFile(L"C:\\Users\\sergo\\source\\repos\\CG\\ITMO-CG\\CG-HW-3\\TextureShader.hlsl",
                                   nullptr,
                                   nullptr,
                                   "VSMain",
@@ -79,7 +79,7 @@ void SphereComponent::Initialize() {
     D3D_SHADER_MACRO Shader_Macros[] = {{"TEXCOORD", "float2"}, {nullptr, nullptr}};
 
     ID3DBlob *errorPixelCode;
-    res = D3DCompileFromFile(L"C:\\Users\\sergo\\source\\repos\\CG-HW-3\\CG-HW-1\\TextureShader.hlsl",
+    res = D3DCompileFromFile(L"C:\\Users\\sergo\\source\\repos\\CG\\ITMO-CG\\CG-HW-3\\TextureShader.hlsl",
                              Shader_Macros,
                              nullptr,
                              "PSMain",
@@ -237,26 +237,11 @@ void SphereComponent::Draw() {
     game->Context->PSSetShaderResources(0, 1, &textureSRV);
     //fixmetodo
     // game->Context->OMSetDepthStencilState(game->depthStencilState, 0);
-    constantBuffer.data.xOffset = offset.x;
-    constantBuffer.data.yOffset = offset.y;
-    /*XMMATRIX world = DirectX::XMMatrixIdentity();
-    static DirectX::XMVECTOR eyePos = DirectX::XMVectorSet(0.0f, 0.0f, -2.0f, 0.0f);
-    DirectX::XMFLOAT3 eyePosFloat3;
-    DirectX::XMStoreFloat3(&eyePosFloat3, eyePos);
-    eyePosFloat3.y += 0.01f;
-    eyePos = DirectX::XMLoadFloat3(&eyePosFloat3);
-    static DirectX::XMVECTOR lookAtPos = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-    static DirectX::XMVECTOR upVector = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-    DirectX::XMMATRIX view = DirectX::XMMatrixLookAtLH(eyePos, lookAtPos, upVector);
-    float fovDegrees = 90.0f;
-    float fovRadians = (fovDegrees / 360.0f) * DirectX::XM_2PI;
-    float aspectRatio = static_cast<float>(viewport.Width) / static_cast<float>(viewport.Height);
-    float nearZ = 0.1f;
-    float farZ = 1000.0f;
-    DirectX::XMMATRIX projectionMatrix = DirectX::XMMatrixPerspectiveFovLH(fovRadians, aspectRatio, nearZ, farZ);*/
-    //constantBuffer.data.mat = mat * view * projectionMatrix;
-    constantBuffer.data.mat = mat * camera.GetViewMatrix() * camera.GetProjectionMatrix();
-    constantBuffer.data.mat = XMMatrixTranspose(constantBuffer.data.mat);
+
+    constantBuffer.data.world = XMMatrixTranspose(mat);
+    constantBuffer.data.view = XMMatrixTranspose(camera.GetViewMatrix());
+    constantBuffer.data.projection = XMMatrixTranspose(camera.GetProjectionMatrix());
+
     if (!constantBuffer.ApplyChanges()) {
         return;
     }
@@ -267,11 +252,7 @@ void SphereComponent::Draw() {
 void SphereComponent::Update() {
     static float cameraSpeed = 0.01f;
     RotateByCenter(orbitalVelocity);
-    // game->Context->UpdateSubresource(constantBuffer.Get(), 0, 0, &position_, 0, 0);
-    // game->Context->UpdateSubresource(constantBuffer.Get(), 0, 0, &mat, 0, 0);
-    game->Context->UpdateSubresource(constantBuffer.Get(), 0, 0, &constantBuffer.data, 0, 0);
-    //set camera rotation by mouse
-
+    RotateAroundSun();
 
     if (game->InputDev->IsKeyDown(Keys::W)) {
         camera.AdjustPosition(camera.GetForwardVector() * cameraSpeed);
@@ -293,7 +274,7 @@ void SphereComponent::Update() {
         camera.AdjustPosition(0.0f, cameraSpeed, 0.0f);
     }
     if (game->InputDev->IsKeyDown(Keys::LeftShift)) {
-        camera.AdjustPosition(0.0f, -cameraSpeed, 0.0f);
+         camera.AdjustPosition(0.0f, -cameraSpeed, 0.0f);
     }
 
     if (game->InputDev->IsKeyDown(Keys::Up)) {
@@ -328,7 +309,7 @@ void SphereComponent::Update() {
         isAnimating = true;  // Запускаем анимацию
         t = 0.0f;            // Обнуляем интерполяцию
         const auto* sphere = dynamic_cast<SphereComponent*>(game->Components[1]);
-        basePos = XMVectorSet(sphere->position_.x, sphere->position_.y, -2.0f, 0.0f);
+        basePos = XMVectorSet(sphere->GetPosition().x, sphere->GetPosition().y, sphere->GetPosition().z, 0.0f);
     }
 
     if (isAnimating) {
@@ -348,7 +329,8 @@ void SphereComponent::Update() {
         camera.SetPosition(newPos);
         camera.SetRotation(newRot);
     }
-
+    // game->Context->UpdateSubresource(constantBuffer.Get(), 0, 0, &mat, 0, 0);
+    game->Context->UpdateSubresource(constantBuffer.Get(), 0, 0, &constantBuffer.data, 0, 0);
 }
 
 float SmoothStep(float t) {
@@ -365,13 +347,25 @@ SphereComponent::~SphereComponent() {
 
 void SphereComponent::RotateByCenter(float angle) {
     rotationAngle += angle;
-    mat = XMMatrixRotationY(rotationAngle);
+    XMFLOAT3 pos = GetPosition();
+    XMMATRIX translationMat = XMMatrixTranslation(pos.x, pos.y, pos.z);
+    XMMATRIX rotationMat = XMMatrixRotationY(rotationAngle);
+    XMMATRIX scaleMat = XMMatrixScaling(1.0f, 1.0f, 1.0f);
+    mat = scaleMat * rotationMat * translationMat;
+}
+
+void SphereComponent::RotateAround(float x, float y, float z) {
+    XMVECTOR pos = XMLoadFloat3(GetPosition());
+
 }
 
 void SphereComponent::SetPosition(float x, float y, float z) {
-    position_ = XMFLOAT3(x, y, z);
-    mat = XMMatrixTranslation(x, y, 0.0f);
-    offset = SimpleMath::Vector4(x, y, z, 0.0f);
+    XMMATRIX translationMat = XMMatrixTranslation(x, y, z);
+    XMMATRIX rotationMat = XMMatrixRotationY(rotationAngle);
+    XMMATRIX scaleMat = XMMatrixScaling(1.0f, 1.0f, 1.0f);
+    mat = scaleMat * rotationMat * translationMat;
 }
 
-
+XMFLOAT3 SphereComponent::GetPosition() const {
+    return {mat.r[3].m128_f32[0], mat.r[3].m128_f32[1], mat.r[3].m128_f32[2]};
+}

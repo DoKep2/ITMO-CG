@@ -11,30 +11,29 @@
 
 MyGame::MyGame() : Game(L"MyGame", 800, 800)
 {
-	auto sphere = new SphereComponent(this, L"C:\\Users\\sergo\\source\\repos\\CG-HW-3\\CG-HW-1\\src\\textures\\sun.dds", PlanetRadius::Sun, 0.01f);
+	auto sphere = new SphereComponent(this, L"C:\\Users\\sergo\\source\\repos\\CG-HW-3\\CG-HW-2\\src\\textures\\sun.dds", PlanetRadius::Sun, 0.01f);
 	Components.push_back(sphere);
 
-	auto mercury = new SphereComponent(this, L"C:\\Users\\sergo\\source\\repos\\CG-HW-3\\CG-HW-1\\src\\textures\\mercury.dds", PlanetRadius::Mercury, PlanetVelocity::Mercury);
-	mercury->SetPosition(PlanetDistanceToSun::Mercury, 0.0f, 0.0f);
+	auto mercury = new SphereComponent(this, L"C:\\Users\\sergo\\source\\repos\\CG-HW-3\\CG-HW-2\\src\\textures\\mercury.dds", PlanetRadius::Mercury, PlanetVelocity::Mercury);
+	mercury->SetPosition(0.0f, 0.0f, -PlanetDistanceToSun::Mercury);
 	Components.push_back(mercury);
 
 
-	auto venus = new SphereComponent(this, L"C:\\Users\\sergo\\source\\repos\\CG-HW-3\\CG-HW-1\\src\\textures\\venus_surface.dds", PlanetRadius::Venus, PlanetVelocity::Venus);
-	venus->SetPosition(PlanetDistanceToSun::Venus, 0.0f, 0.0f);
+	auto venus = new SphereComponent(this, L"C:\\Users\\sergo\\source\\repos\\CG-HW-3\\CG-HW-2\\src\\textures\\venus_surface.dds", PlanetRadius::Venus, PlanetVelocity::Venus);
+	venus->SetPosition(0.0f, 0.0f, -PlanetDistanceToSun::Venus);
 	Components.push_back(venus);
 
-	auto earth = new SphereComponent(this, L"C:\\Users\\sergo\\source\\repos\\CG-HW-3\\CG-HW-1\\src\\textures\\earth.dds", PlanetRadius::Earth, PlanetVelocity::Earth);
-	earth->SetPosition(PlanetDistanceToSun::Earth, 0.0f, 0.0f);
+	auto earth = new SphereComponent(this, L"C:\\Users\\sergo\\source\\repos\\CG-HW-3\\CG-HW-2\\src\\textures\\earth.dds", PlanetRadius::Earth, PlanetVelocity::Earth);
+	earth->SetPosition(0.0f, 0.0f, -PlanetDistanceToSun::Earth);
 	Components.push_back(earth);
 
-	auto mars = new SphereComponent(this, L"C:\\Users\\sergo\\source\\repos\\CG-HW-3\\CG-HW-1\\src\\textures\\mars.dds", PlanetRadius::Mars, PlanetVelocity::Mars);
-	mars->SetPosition(PlanetDistanceToSun::Mars, 0.0f, 0.0f);
+	auto mars = new SphereComponent(this, L"C:\\Users\\sergo\\source\\repos\\CG-HW-3\\CG-HW-2\\src\\textures\\mars.dds", PlanetRadius::Mars, PlanetVelocity::Mars);
+	mars->SetPosition(0.0f, 0.0f, -PlanetDistanceToSun::Mars);
 	Components.push_back(mars);
 
-	auto jupiter = new SphereComponent(this, L"C:\\Users\\sergo\\source\\repos\\CG-HW-3\\CG-HW-1\\src\\textures\\mars.dds", PlanetRadius::Jupiter, PlanetVelocity::Jupiter);
-	jupiter->SetPosition(PlanetDistanceToSun::Jupiter, 0.0f, 0.0f);
+	auto jupiter = new SphereComponent(this, L"C:\\Users\\sergo\\source\\repos\\CG-HW-3\\CG-HW-2\\src\\textures\\mars.dds", PlanetRadius::Jupiter, PlanetVelocity::Jupiter);
+	jupiter->SetPosition(0.0f, 0.0f, -PlanetDistanceToSun::Jupiter);
 	Components.push_back(jupiter);
-
 
 	//auto triangle = new TriangleComponent(this);
 	//triangle->SetPosition(-0.5f, -0.5f);

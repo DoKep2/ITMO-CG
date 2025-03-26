@@ -12,20 +12,28 @@ struct PS_IN
 
 cbuffer cbPerObject : register(b0)
 {
-    float4 gOffset;
+    float4x4 world;
+    float4x4 view;
+    float4x4 projection;
 };
+
 
 PS_IN VSMain(VS_IN input)
 {
     PS_IN output = (PS_IN) 0;
-	
-    output.pos = input.pos + gOffset;
+
+    input.pos = mul(input.pos, world);
+    input.pos = mul(input.pos, view);
+    input.pos = mul(input.pos, projection);
+
+    output.pos = input.pos;
     output.col = input.col;
-	
+
     return output;
 }
 
 float4 PSMain(PS_IN input) : SV_Target
 {
-    return input.col;
+    float4 col = input.col;
+    return col;
 }

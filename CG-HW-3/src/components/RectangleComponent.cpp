@@ -57,10 +57,10 @@ void RectangleComponent::Draw()
 	game->Context->VSSetShader(vertexShader, nullptr, 0);
 	game->Context->PSSetShader(pixelShader, nullptr, 0);
 
-	constantBuffer.data.xOffset = offset.x;
-	constantBuffer.data.yOffset = offset.y;
-	constantBuffer.data.mat = mat;
-	constantBuffer.data.mat = DirectX::XMMatrixTranspose(constantBuffer.data.mat);
+	// constantBuffer.data.xOffset = offset.x;
+	// constantBuffer.data.yOffset = offset.y;
+	constantBuffer.data.world = mat;
+	constantBuffer.data.world = DirectX::XMMatrixTranspose(constantBuffer.data.world);
 	if (!constantBuffer.ApplyChanges())
 	{
 		return;

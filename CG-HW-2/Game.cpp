@@ -50,15 +50,6 @@ LRESULT CALLBACK Game::WndProc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM l
 		if (game) {
 			if (raw->header.dwType == RIM_TYPEKEYBOARD)
 			{
-				/// fixme
-				//printf(" Kbd: make=%04i Flags:%04i Reserved:%04i ExtraInformation:%08i, msg=%04i VK=%i \n",
-				//	raw->data.keyboard.MakeCode,
-				//	raw->data.keyboard.Flags,
-				//	raw->data.keyboard.Reserved,
-				//	raw->data.keyboard.ExtraInformation,
-				//	raw->data.keyboard.Message,
-				//	raw->data.keyboard.VKey);
-
 				game->InputDev->OnKeyDown({
 					raw->data.keyboard.MakeCode,
 					raw->data.keyboard.Flags,

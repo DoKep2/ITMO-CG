@@ -3,7 +3,7 @@
 #include <d3dcompiler.h>
 #include <iostream>
 
-RacketComponent::RacketComponent(Game* g) : GameComponent(g), position_(0.0f, 0.0f) {
+RacketComponent::RacketComponent(Game* g) : GameComponent(g), mat(DirectX::XMMatrixIdentity()) {
     DirectX::XMFLOAT4 pointsTmp[8] = {
         DirectX::XMFLOAT4(0.03f, 0.2f, 0.5f, 1.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
         DirectX::XMFLOAT4(0.0f, 0.0f, 0.5f, 1.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
@@ -19,7 +19,7 @@ RacketComponent::~RacketComponent() {
 
 void RacketComponent::Initialize() {
 	ID3DBlob* errorVertexCode = nullptr;
-	auto res = D3DCompileFromFile(L"C:\\Users\\sergo\\source\\repos\\CG-HW-1.1\\CG-HW-1\\VertexShader.hlsl",
+	auto res = D3DCompileFromFile(L"..\\VertexShader.hlsl",
 		nullptr /*macros*/,
 		nullptr /*include*/,
 		"VSMain",
@@ -48,7 +48,7 @@ void RacketComponent::Initialize() {
 	D3D_SHADER_MACRO Shader_Macros[] = { "TEST", "1", "TCOLOR", "float4(0.0f, 1.0f, 0.0f, 1.0f)", nullptr, nullptr };
 
 	ID3DBlob* errorPixelCode;
-	res = D3DCompileFromFile(L"C:\\Users\\sergo\\source\\repos\\CG-HW-1.1\\CG-HW-1\\VertexShader.hlsl",
+	res = D3DCompileFromFile(L"..\\VertexShader.hlsl",
 		Shader_Macros /*macros*/,
 		nullptr /*include*/,
 		"PSMain",
@@ -128,25 +128,29 @@ void RacketComponent::Initialize() {
 	strides_[0] = 32;
 	offsets_[0] = 0;
 
-	D3D11_BUFFER_DESC constBufDesc = {};
-	constBufDesc.Usage = D3D11_USAGE_DEFAULT;
-	constBufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	constBufDesc.CPUAccessFlags = 0;
-	constBufDesc.MiscFlags = 0;
-	constBufDesc.StructureByteStride = 0;
-	constBufDesc.ByteWidth = sizeof(DirectX::SimpleMath::Vector4);
-
-	game->Device->CreateBuffer(&constBufDesc, nullptr, &constBuffer_);
+	HRESULT hr = this->constantBuffer.Initialize(game->Device.Get(), game->Context);
+	if (FAILED(hr))
+	{
+		return;
+	}
 
 	CD3D11_RASTERIZER_DESC rastDesc = {};
-	rastDesc.CullMode = D3D11_CULL_NONE;
+	rastDesc.CullMode = D3D11_CULL_FRONT;
 	rastDesc.FillMode = D3D11_FILL_SOLID;
 
 	res = game->Device->CreateRasterizerState(&rastDesc, &rastState_);
 }
 
 void RacketComponent::Update() {
-    game->Context->UpdateSubresource(constBuffer_, 0, 0, &position_, 0, 0);
+	game->Context->UpdateSubresource(constantBuffer.Get(), 0, 0, &constantBuffer.data, 0, 0);
+}
+
+void RacketComponent::UpdateRotation() {
+	DirectX::XMMATRIX rotationMatrix = mat;
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	game->Context->Map(constantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	memcpy(mappedResource.pData, &rotationMatrix, sizeof(DirectX::XMMATRIX));
+	game->Context->Unmap(constantBuffer.Get(), 0);
 }
 
 void RacketComponent::Draw() {
@@ -167,8 +171,16 @@ void RacketComponent::Draw() {
 	game->Context->IASetIndexBuffer(ib_, DXGI_FORMAT_R32_UINT, 0);
 	game->Context->IASetVertexBuffers(0, 1, &vb_, strides_, offsets_);
 	game->Context->VSSetShader(vertexShader_, nullptr, 0);
-	game->Context->VSSetConstantBuffers(0, 1, &constBuffer_);
 	game->Context->PSSetShader(pixelShader_, nullptr, 0);
+
+	constantBuffer.data.world = XMMatrixTranspose(mat);
+	constantBuffer.data.view = DirectX::XMMatrixIdentity();
+	constantBuffer.data.projection = DirectX::XMMatrixIdentity();
+	if (!constantBuffer.ApplyChanges())
+	{
+		return;
+	}
+	game->Context->VSSetConstantBuffers(0, 1, this->constantBuffer.GetAddressOf());
 
 	game->Context->DrawIndexed(6, 0, 0);
 }
@@ -187,26 +199,57 @@ void RacketComponent::DestroyResources() {
 	vertexShaderByteCode_->Release();
 	vb_->Release();
 	ib_->Release();
-	constBuffer_->Release();
 }
 
 void RacketComponent::SetPosition(float x, float y) {
-    position_.x = x;
-    position_.y = y;
+	mat.r[3] = DirectX::XMVectorSet(x, y, 0.0f, 1.0f);
 }
 
 void RacketComponent::MoveUp(float amount) {
-    position_.y += amount;
+	SetPosition(GetPosition().x, GetPosition().y + amount);
 }
 
 void RacketComponent::MoveDown(float amount) {
-    position_.y -= amount;
+	SetPosition(GetPosition().x, GetPosition().y - amount);
 }
 
-DirectX::SimpleMath::Vector2 RacketComponent::GetPosition() const {
-	return position_;
+void RacketComponent::MoveLeft(float amount) {
+	SetPosition(GetPosition().x - amount, GetPosition().y);
+}
+
+void RacketComponent::MoveRight(float amount) {
+	SetPosition(GetPosition().x + amount, GetPosition().y);
+}
+
+void RacketComponent::Rotate(float angle) {
+	rotationAngle += angle;
+	DirectX::XMFLOAT3 pos = GetPosition();
+	DirectX::XMMATRIX translationMat = DirectX::XMMatrixTranslation(pos.x, pos.y, pos.z);
+	DirectX::XMMATRIX rotationMat = DirectX::XMMatrixRotationZ(rotationAngle);
+	DirectX::XMMATRIX scaleMat = DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f);
+	mat = scaleMat * rotationMat * translationMat;
+}
+
+void RacketComponent::Rotate(float angle, float x, float y) {
+	DirectX::XMFLOAT3 pos = GetPosition();
+	float localX = -(x - pos.x);
+	float localY = -(y - pos.y);
+
+	DirectX::XMMATRIX translationToPivot = DirectX::XMMatrixTranslation(-localX, -localY, 0.0f);
+	DirectX::XMMATRIX rotationMat = DirectX::XMMatrixRotationZ(angle);
+	DirectX::XMMATRIX translationBack = DirectX::XMMatrixTranslation(localX, localY, 0.0f);
+
+	mat = translationBack * rotationMat * translationToPivot * mat;
+}
+
+DirectX::XMFLOAT3 RacketComponent::GetPosition() const {
+	return {mat.r[3].m128_f32[0], mat.r[3].m128_f32[1], mat.r[3].m128_f32[2]};
 }
 
 DirectX::SimpleMath::Vector2 RacketComponent::GetSize() const {
 	return DirectX::SimpleMath::Vector2(0.03f, 0.2f);
+}
+
+DirectX::XMMATRIX RacketComponent::GetMatrix() const {
+	return mat;
 }

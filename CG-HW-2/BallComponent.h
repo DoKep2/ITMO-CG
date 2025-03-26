@@ -22,21 +22,21 @@ public:
 	bool IsCollidedWithVerticalWall() const;
 	void ChangeVelocityAfterCollision(RacketComponent* racket);
 
-	DirectX::SimpleMath::Vector2 GetPosition() const;
+	DirectX::XMFLOAT3 GetPosition() const;
 
 private:
     DirectX::SimpleMath::Vector2 velocity_;
-    DirectX::SimpleMath::Vector2 position_;
     DirectX::XMFLOAT4 points_[100];
     ID3D11Buffer* vb_;
     ID3D11Buffer* ib_;
     ID3D11InputLayout* layout_;
     ID3D11VertexShader* vertexShader_;
     ID3D11PixelShader* pixelShader_;
-    ID3D11Buffer* constBuffer_;
     ID3D11RasterizerState* rastState_;
     ID3DBlob* vertexShaderByteCode_;
     ID3DBlob* pixelShaderByteCode_;
+	ConstantBuffer<CB_VS_vertexshader> constantBuffer;
+	DirectX::XMMATRIX mat = DirectX::XMMatrixIdentity();
     UINT strides_[1];
     UINT offsets_[1];
 };

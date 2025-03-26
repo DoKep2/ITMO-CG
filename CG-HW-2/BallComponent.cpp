@@ -7,7 +7,7 @@
 
 const float kBallAcceleration = 0.002f;
 
-BallComponent::BallComponent(Game* g) : GameComponent(g), velocity_(0.0f, 0.0f), position_(0.0f, 0.0f) {
+BallComponent::BallComponent(Game* g) : GameComponent(g), velocity_(0.0f, 0.0f) {
 	DirectX::XMFLOAT4 points[100];
 	for (int i = 0; i < 50; i++) {
 		float angle = DirectX::XM_2PI * i / 50;
@@ -36,7 +36,7 @@ void BallComponent::Reload()
 
 void BallComponent::Initialize() {
 	ID3DBlob* errorVertexCode = nullptr;
-	auto res = D3DCompileFromFile(L"C:\\Users\\sergo\\source\\repos\\CG-HW-1.1\\CG-HW-1\\VertexShader.hlsl",
+	auto res = D3DCompileFromFile(L"..\\VertexShader.hlsl",
 		nullptr /*macros*/,
 		nullptr /*include*/,
 		"VSMain",
@@ -65,7 +65,7 @@ void BallComponent::Initialize() {
 	D3D_SHADER_MACRO Shader_Macros[] = { "TEST", "1", "TCOLOR", "float4(0.0f, 1.0f, 0.0f, 1.0f)", nullptr, nullptr };
 
 	ID3DBlob* errorPixelCode;
-	res = D3DCompileFromFile(L"C:\\Users\\sergo\\source\\repos\\CG-HW-1.1\\CG-HW-1\\VertexShader.hlsl",
+	res = D3DCompileFromFile(L"..\\VertexShader.hlsl",
 		Shader_Macros /*macros*/,
 		nullptr /*include*/,
 		"PSMain",
@@ -152,6 +152,12 @@ void BallComponent::Initialize() {
 	strides_[0] = 32;
 	offsets_[0] = 0;
 
+	HRESULT hr = this->constantBuffer.Initialize(game->Device.Get(), game->Context);
+	if (FAILED(hr))
+	{
+		return;
+	}
+
 	D3D11_BUFFER_DESC constBufDesc = {};
 	constBufDesc.Usage = D3D11_USAGE_DEFAULT;
 	constBufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
@@ -159,8 +165,6 @@ void BallComponent::Initialize() {
 	constBufDesc.MiscFlags = 0;
 	constBufDesc.StructureByteStride = 0;
 	constBufDesc.ByteWidth = sizeof(DirectX::SimpleMath::Vector4);
-
-	game->Device->CreateBuffer(&constBufDesc, nullptr, &constBuffer_);
 
 	CD3D11_RASTERIZER_DESC rastDesc = {};
 	rastDesc.CullMode = D3D11_CULL_NONE;
@@ -171,7 +175,7 @@ void BallComponent::Initialize() {
 }
 
 void BallComponent::Update() {
-	SetPosition(position_.x + velocity_.x, position_.y + velocity_.y);
+	SetPosition(GetPosition().x + velocity_.x, GetPosition().y + velocity_.y);
 	if (IsOutOfBounds()) {
 		static_cast<PongGame*>(game)->UpdateResult();
 		SetPosition(0.0f, 0.0f);
@@ -197,7 +201,8 @@ void BallComponent::Update() {
 		}
 	}
 
-	game->Context->UpdateSubresource(constBuffer_, 0, 0, &position_, 0, 0);
+	// game->Context->UpdateSubresource(constBuffer_, 0, 0, &position_, 0, 0);
+	game->Context->UpdateSubresource(constantBuffer.Get(), 0, 0, &constantBuffer.data, 0, 0);
 }
 
 void BallComponent::Draw() {
@@ -217,8 +222,16 @@ void BallComponent::Draw() {
 	game->Context->IASetIndexBuffer(ib_, DXGI_FORMAT_R32_UINT, 0);
 	game->Context->IASetVertexBuffers(0, 1, &vb_, strides_, offsets_);
 	game->Context->VSSetShader(vertexShader_, nullptr, 0);
-	game->Context->VSSetConstantBuffers(0, 1, &constBuffer_);
 	game->Context->PSSetShader(pixelShader_, nullptr, 0);
+
+	constantBuffer.data.world = XMMatrixTranspose(mat);
+	constantBuffer.data.view = DirectX::XMMatrixIdentity();
+	constantBuffer.data.projection = DirectX::XMMatrixIdentity();
+	if (!constantBuffer.ApplyChanges())
+	{
+		return;
+	}
+	game->Context->VSSetConstantBuffers(0, 1, this->constantBuffer.GetAddressOf());
 
 	game->Context->DrawIndexed(300, 0, 0);
 }
@@ -232,7 +245,7 @@ void BallComponent::DestroyResources() {
 	vertexShaderByteCode_->Release();
 	vb_->Release();
 	ib_->Release();
-	constBuffer_->Release();
+	// constantBuffer->Release();
 }
 
 void BallComponent::SetVelocity(float x, float y) {
@@ -241,21 +254,26 @@ void BallComponent::SetVelocity(float x, float y) {
 }
 
 void BallComponent::SetPosition(float x, float y) {
-	position_.x = x;
-	position_.y = y;
+	DirectX::XMMATRIX translationMat = DirectX::XMMatrixTranslation(x, y, 0.0f);
+	DirectX::XMMATRIX rotationMat = DirectX::XMMatrixRotationY(0.0f);
+	DirectX::XMMATRIX scaleMat = DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f);
+	mat = scaleMat * rotationMat * translationMat;
 }
 
 void BallComponent::CheckCollision(RacketComponent* racket) {
-	DirectX::SimpleMath::Vector2 racketPos = racket->GetPosition();
+	DirectX::XMFLOAT3 racketPos = racket->GetPosition();
+	DirectX::XMFLOAT3 pos = GetPosition();
 	DirectX::SimpleMath::Vector2 racketSize = racket->GetSize();
-	DirectX::BoundingBox racketBox;
+	DirectX::BoundingOrientedBox racketBox;
 	DirectX::BoundingSphere ballSphere;
 	racketBox.Center = DirectX::XMFLOAT3(racketPos.x + racketSize.x / 2, racketPos.y + racketSize.y / 2, 0.0f);
 	racketBox.Extents = DirectX::XMFLOAT3(racketSize.x / 2, racketSize.y / 2, 0.0f);
-	ballSphere.Center = DirectX::XMFLOAT3(position_.x, position_.y, 0.0f);
+	DirectX::XMVECTOR quaternion = DirectX::XMQuaternionRotationMatrix(racket->GetMatrix());
+	XMStoreFloat4(&racketBox.Orientation, quaternion);
+	ballSphere.Center = DirectX::XMFLOAT3(pos.x, pos.y, 0.0f);
 	ballSphere.Radius = 0.025f;
 
-	if (racketBox.Intersects(ballSphere) && position_.x >= -0.95 + racket->GetSize().x && position_.x <= 0.92) {
+	if (racketBox.Intersects(ballSphere) && pos.x >= -0.95 + racket->GetSize().x && pos.x <= 0.92) {
 		ChangeVelocityAfterCollision(racket);
 
 
@@ -268,21 +286,23 @@ void BallComponent::CheckCollision(RacketComponent* racket) {
 }
 
 bool BallComponent::IsOutOfBounds() const {
-	return position_.x > 1.0f || position_.x < -1.0f;
+	auto pos = GetPosition();
+	return pos.x > 1.0f || pos.x < -1.0f;
 }
 
 bool BallComponent::IsCollidedWithVerticalWall() const {
-	return position_.y > 1.0f || position_.y < -1.0f;
+	auto pos = GetPosition();
+	return pos.y > 1.0f || pos.y < -1.0f;
 }
 
-DirectX::SimpleMath::Vector2 BallComponent::GetPosition() const {
-	return position_;
+DirectX::XMFLOAT3 BallComponent::GetPosition() const {
+	return {mat.r[3].m128_f32[0], mat.r[3].m128_f32[1], mat.r[3].m128_f32[2]};
 }
 
 void BallComponent::ChangeVelocityAfterCollision(RacketComponent* racket) {
 	float racketHeight = racket->GetSize().y;
 	float racketY = racket->GetPosition().y;
-	float ballY = position_.y;
+	float ballY = GetPosition().y;
 
 	float relativeIntersectY = (ballY - racketY) - (racketHeight / 2.0f);
 	float normalizedRelativeIntersectionY = relativeIntersectY / (racketHeight / 2.0f);
@@ -300,3 +320,4 @@ void BallComponent::ChangeVelocityAfterCollision(RacketComponent* racket) {
 	velocity_.x += std::copysign(kBallAcceleration, velocity_.x);
 	velocity_.y += std::copysign(kBallAcceleration, velocity_.y);
 }
+
