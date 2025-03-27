@@ -209,10 +209,7 @@ void RectangleComponent::Reload()
 
 void RectangleComponent::SetPosition(float x, float y)
 {
-	XMMATRIX translationMat = XMMatrixTranslation(x, y, 0.0f);
-	XMMATRIX rotationMat = XMMatrixRotationY(rotation);
-	XMMATRIX scaleMat = XMMatrixScaling(1.0f, 1.0f, 1.0f);
-	mat = scaleMat * rotationMat * translationMat;
+	mat.r[3] = DirectX::XMVectorSet(x, y, 0.0f, 1.0f);
 }
 
 void RectangleComponent::SetRotation(float angle)

@@ -8,12 +8,13 @@
 MyGame::MyGame() : Game(L"MyGame", 800, 800)
 {
 	auto cannon = new RectangleComponent(this);
+	cannon->SetPosition(0, -0.8f);
 	Components.push_back(cannon);
 	auto square = new SquareComponent(this);
 	// // generate random position
 	std::random_device rd;
 	std::mt19937 gen(rd());
-	std::uniform_real_distribution<float> dis(0.0f, 1.0f);
+	std::uniform_real_distribution<float> dis(0.0f, 0.8f);
 	square->SetPosition(dis(gen), dis(gen));
 	Components.push_back(square);
 
@@ -99,6 +100,7 @@ void MyGame::BindTriangleToCannon(TriangleComponent* triangle, RectangleComponen
 	float rotatedCenterY = (rotatedTopLeftY + rotatedTopRightY) / 2;
 
 	triangle->SetPosition(rotatedCenterX, rotatedCenterY);
-	// triangle->SetRotation(angle);
+	auto trianglePos = triangle->GetPosition();
+	triangle->SetRotation(angle, trianglePos.x, trianglePos.y);
 	triangle->SetVelocity(0.01f * cos(angleRad + DirectX::XM_PIDIV2), 0.01f * sin(angleRad + DirectX::XM_PIDIV2));
 }

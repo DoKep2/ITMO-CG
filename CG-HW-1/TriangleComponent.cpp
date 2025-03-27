@@ -225,24 +225,24 @@ void TriangleComponent::Reload()
 }
 
 void TriangleComponent::SetPosition(float x, float y) {
-	XMMATRIX translationMat = XMMatrixTranslation(x, y, 0.0f);
-	XMMATRIX rotationMat = XMMatrixRotationY(rotationAngle);
-	XMMATRIX scaleMat = XMMatrixScaling(1.0f, 1.0f, 1.0f);
-	mat = scaleMat * rotationMat * translationMat;
+	mat.r[3] = DirectX::XMVectorSet(x, y, 0.0f, 1.0f);
 }
 
 XMFLOAT3 TriangleComponent::GetPosition() const {
 	return {mat.r[3].m128_f32[0], mat.r[3].m128_f32[1], mat.r[3].m128_f32[2]};
 };
 
-void TriangleComponent::SetRotation(float angle)
+void TriangleComponent::SetRotation(float angle, float x, float y)
 {
-	rotationAngle += angle;
-	XMFLOAT3 pos = GetPosition();
-	XMMATRIX translationMat = XMMatrixTranslation(pos.x, pos.y, pos.z);
-	XMMATRIX rotationMat = XMMatrixRotationY(rotationAngle);
-	XMMATRIX scaleMat = XMMatrixScaling(1.0f, 1.0f, 1.0f);
-	mat = scaleMat * rotationMat * translationMat;
+	DirectX::XMFLOAT3 pos = GetPosition();
+	float localX = -(x - pos.x);
+	float localY = -(y - pos.y);
+
+	DirectX::XMMATRIX translationToPivot = DirectX::XMMatrixTranslation(-localX, -localY, 0.0f);
+	DirectX::XMMATRIX rotationMat = DirectX::XMMatrixRotationZ(angle);
+	DirectX::XMMATRIX translationBack = DirectX::XMMatrixTranslation(localX, localY, 0.0f);
+
+	mat = translationBack * rotationMat * translationToPivot * mat;
 }
 
 void TriangleComponent::SetVelocity(float x, float y) {
@@ -262,7 +262,7 @@ void TriangleComponent::CheckCollision(SquareComponent *square) {
 	if (triangleBox.Intersects(squareBox)) {
 		std::random_device rd;
 		std::mt19937 gen(rd());
-		std::uniform_real_distribution<float> dis(0.0f, 1.0f);
+		std::uniform_real_distribution<float> dis(0.0f, 0.8f);
 		square->SetPosition(dis(gen), dis(gen));
 		SetPosition(10.0f, 10.0f);
 	}

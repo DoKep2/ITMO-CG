@@ -44,7 +44,7 @@ public:
 
     DirectX::SimpleMath::Vector4* GetPoints();
     void SetPosition(float x, float y);
-    void SetRotation(float angle);
+    void SetRotation(float angle, float x, float y);
     void SetVelocity(float x, float y);
     void CheckCollision(SquareComponent* square);
 };
