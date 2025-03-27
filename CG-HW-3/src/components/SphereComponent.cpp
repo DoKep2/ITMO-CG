@@ -23,7 +23,6 @@ SphereComponent::SphereComponent(Game *g, std::wstring texturePath, float radius
             float y = radius_ * cosf(phi);
             float z = radius_ * sinf(phi) * sinf(theta);
             if(x == 0.0f && y == 0.0f && z == 0.0f) {
-                std::cout << "ABOBA";
                 continue;
             }
             points_[i * (sliceCount_ + 1) + j] = XMFLOAT4(x, y, z, 1.0f);
@@ -51,7 +50,7 @@ SphereComponent::SphereComponent(Game *g, std::wstring texturePath, float radius
 void SphereComponent::Initialize() {
     ID3DBlob *errorVertexCode = nullptr;
 
-    auto res = D3DCompileFromFile(L"C:\\Users\\sergo\\source\\repos\\CG\\ITMO-CG\\CG-HW-3\\TextureShader.hlsl",
+    auto res = D3DCompileFromFile(L"..\\TextureShader.hlsl",
                                   nullptr,
                                   nullptr,
                                   "VSMain",
@@ -70,7 +69,7 @@ void SphereComponent::Initialize() {
         }
         // If there was  nothing in the error message then it simply could not find the shader file itself.
         else {
-            // MessageBox(game->Display->hWnd, L"TextureShader.hlsl", L"Missing Shader File", MB_OK);
+            MessageBox(game->Display->hWnd, L"TextureShader.hlsl", L"Missing Shader File", MB_OK);
         }
 
         return;
@@ -79,7 +78,7 @@ void SphereComponent::Initialize() {
     D3D_SHADER_MACRO Shader_Macros[] = {{"TEXCOORD", "float2"}, {nullptr, nullptr}};
 
     ID3DBlob *errorPixelCode;
-    res = D3DCompileFromFile(L"C:\\Users\\sergo\\source\\repos\\CG\\ITMO-CG\\CG-HW-3\\TextureShader.hlsl",
+    res = D3DCompileFromFile(L"..\\TextureShader.hlsl",
                              Shader_Macros,
                              nullptr,
                              "PSMain",
@@ -251,8 +250,8 @@ void SphereComponent::Draw() {
 
 void SphereComponent::Update() {
     static float cameraSpeed = 0.01f;
-    RotateByCenter(orbitalVelocity);
-    RotateAroundSun();
+    auto pos = GetPosition();
+    RotateAroundY(0.01f, 0.0f, 0.0f, 0.0f);
 
     if (game->InputDev->IsKeyDown(Keys::W)) {
         camera.AdjustPosition(camera.GetForwardVector() * cameraSpeed);
@@ -329,7 +328,6 @@ void SphereComponent::Update() {
         camera.SetPosition(newPos);
         camera.SetRotation(newRot);
     }
-    // game->Context->UpdateSubresource(constantBuffer.Get(), 0, 0, &mat, 0, 0);
     game->Context->UpdateSubresource(constantBuffer.Get(), 0, 0, &constantBuffer.data, 0, 0);
 }
 
@@ -354,16 +352,20 @@ void SphereComponent::RotateByCenter(float angle) {
     mat = scaleMat * rotationMat * translationMat;
 }
 
-void SphereComponent::RotateAround(float x, float y, float z) {
-    XMVECTOR pos = XMLoadFloat3(GetPosition());
+void SphereComponent::RotateAroundY(float angle, float x, float y, float z) {
+    DirectX::XMFLOAT3 pos = GetPosition();
+    float localX = -(x - pos.x);
+    float localY = -(y - pos.y);
 
+    DirectX::XMMATRIX translationToPivot = DirectX::XMMatrixTranslation(-localX, -localY, 0.0f);
+    DirectX::XMMATRIX rotationMat = DirectX::XMMatrixRotationY(angle);
+    DirectX::XMMATRIX translationBack = DirectX::XMMatrixTranslation(localX, localY, 0.0f);
+
+    mat = translationBack * rotationMat * translationToPivot * mat;
 }
 
 void SphereComponent::SetPosition(float x, float y, float z) {
-    XMMATRIX translationMat = XMMatrixTranslation(x, y, z);
-    XMMATRIX rotationMat = XMMatrixRotationY(rotationAngle);
-    XMMATRIX scaleMat = XMMatrixScaling(1.0f, 1.0f, 1.0f);
-    mat = scaleMat * rotationMat * translationMat;
+    mat.r[3] = DirectX::XMVectorSet(x, y, z, 1.0f);
 }
 
 XMFLOAT3 SphereComponent::GetPosition() const {

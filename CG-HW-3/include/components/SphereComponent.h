@@ -57,7 +57,7 @@ public:
 	void SetRotation(float angle);
 	XMFLOAT3 GetPosition() const;
 	void RotateAround(SphereComponent* center, float distance, float angle);
-	void RotateAround(float x, float y, float z);
+	void RotateAroundY(float angle, float x, float y, float z);
 	void UpdateWorldMatrix();
 	void BindCameraToSphere(SphereComponent* sphere);
 };
