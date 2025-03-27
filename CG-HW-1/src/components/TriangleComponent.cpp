@@ -96,7 +96,7 @@ void TriangleComponent::Initialize() {
 		// If there was  nothing in the error message then it simply could not find the shader file itself.
 		else
 		{
-			MessageBox(game->Display->hWnd, reinterpret_cast<LPCSTR>(L"MyVeryFirstShader.hlsl"), reinterpret_cast<LPCSTR>(L"Missing Shader File"), MB_OK);
+			MessageBox(game->Display->hWnd, L"MyVeryFirstShader.hlsl", L"Missing Shader File", MB_OK);
 		}
 
 		return;

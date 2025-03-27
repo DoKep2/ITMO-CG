@@ -202,7 +202,7 @@ void Game::Run()
 
 			WCHAR text[256];
 			swprintf_s(text, L"%s - FPS: %f", Name, fps);
-			SetWindowText(Display->hWnd, reinterpret_cast<LPCSTR>(text));
+			SetWindowText(Display->hWnd, text);
 
 			frameCount = 0;
 		}

@@ -1,30 +1,8 @@
 #include "DisplayWin32.h"
 #include "Game.h"
+#include <iostream>
 
-LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM lparam)
-{
-	switch (umessage)
-	{
-	case WM_KEYDOWN:
-	{
-		if (wparam == 27)
-			PostQuitMessage(0);
-		return 0;
-	}
-	case WM_KEYUP:
-	{
-		return 0;
-	}
-	case WM_INPUT:
-	{
-		return 0;
-	}
-	default:
-	{
-		return DefWindowProc(hwnd, umessage, wparam, lparam);
-	}
-	}
-}
+
 
 DisplayWin32::DisplayWin32(LPCWSTR applicationName, HINSTANCE hInst, int screenWidth, int screenHeight, Game* g)
 {
@@ -32,7 +10,7 @@ DisplayWin32::DisplayWin32(LPCWSTR applicationName, HINSTANCE hInst, int screenW
 	game = g;
 
 	wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-	wc.lpfnWndProc = WndProc;
+	wc.lpfnWndProc = Game::WndProc;
 	wc.cbClsExtra = 0;
 	wc.cbWndExtra = 0;
 	wc.hInstance = hInstance;
@@ -41,7 +19,7 @@ DisplayWin32::DisplayWin32(LPCWSTR applicationName, HINSTANCE hInst, int screenW
 	wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
 	wc.hbrBackground = static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
 	wc.lpszMenuName = nullptr;
-	wc.lpszClassName = reinterpret_cast<LPCSTR>(applicationName);
+	wc.lpszClassName = applicationName;
 	wc.cbSize = sizeof(WNDCLASSEX);
 
 	// Register the window class.
@@ -58,12 +36,12 @@ DisplayWin32::DisplayWin32(LPCWSTR applicationName, HINSTANCE hInst, int screenW
 	auto posX = (GetSystemMetrics(SM_CXSCREEN) - screenWidth) / 2;
 	auto posY = (GetSystemMetrics(SM_CYSCREEN) - screenHeight) / 2;
 
-	hWnd = CreateWindowEx(WS_EX_APPWINDOW, reinterpret_cast<LPCSTR>(applicationName), reinterpret_cast<LPCSTR>(applicationName),
+	hWnd = CreateWindowEx(WS_EX_APPWINDOW, applicationName, applicationName,
 		dwStyle,
 		posX, posY,
 		windowRect.right - windowRect.left,
 		windowRect.bottom - windowRect.top,
-		nullptr, nullptr, hInstance, nullptr);
+		nullptr, nullptr, hInstance, game);
 
 	ShowWindow(hWnd, SW_SHOW);
 	SetForegroundWindow(hWnd);
