@@ -6,6 +6,10 @@
 #include <iostream>
 
 float SmoothStep(float t);
+static float cameraSpeed = 0.01f;
+static bool isFollowing = false;
+static float interpolation = 0.0f;
+static SphereComponent* followingSphere;
 
 SphereComponent::SphereComponent(Game *g, std::wstring texturePath, float radius, float orbitalVelocity)
     : GameComponent(g), mat(XMMatrixIdentity()),
@@ -168,8 +172,8 @@ void SphereComponent::Initialize() {
 
     CD3D11_RASTERIZER_DESC rastDesc = {};
     rastDesc.CullMode = D3D11_CULL_FRONT;
-    // rastDesc.FillMode = D3D11_FILL_SOLID;
-    rastDesc.FillMode = D3D11_FILL_WIREFRAME;
+    rastDesc.FillMode = D3D11_FILL_SOLID;
+    // rastDesc.FillMode = D3D11_FILL_WIREFRAME;
 
     res = game->Device->CreateRasterizerState(&rastDesc, &rastState_);
 
@@ -195,7 +199,7 @@ void SphereComponent::Initialize() {
     );
 
     if (FAILED(hr)) {
-        // MessageBox(0, L"Texture not found", L"Error", MB_OK);
+        MessageBox(0, L"Texture not found", L"Error", MB_OK);
     }
 
     camera.SetPosition(0.0f, 0.0f, -2.0f);
@@ -249,80 +253,28 @@ void SphereComponent::Draw() {
 }
 
 void SphereComponent::Update() {
-    static float cameraSpeed = 0.01f;
     auto pos = GetPosition();
-    RotateAroundY(0.01f, 0.0f, 0.0f, 0.0f);
+    RotateAroundSphereY(orbitalVelocity, 0.0f, 0.0f, 0.0f, pos.z);
 
-    if (game->InputDev->IsKeyDown(Keys::W)) {
-        camera.AdjustPosition(camera.GetForwardVector() * cameraSpeed);
-    }
+    HandleCameraInput();
 
-    if (game->InputDev->IsKeyDown(Keys::A)) {
-        camera.AdjustPosition(camera.GetLeftVector() * cameraSpeed);
-    }
+    static XMVECTOR basePos;
+    static XMVECTOR baseRot;
 
-    if (game->InputDev->IsKeyDown(Keys::S)) {
-        camera.AdjustPosition(camera.GetBackwardVector() * cameraSpeed);
-    }
-
-    if (game->InputDev->IsKeyDown(Keys::D)) {
-        camera.AdjustPosition(camera.GetRightVector() * cameraSpeed);
-    }
-
-    if (game->InputDev->IsKeyDown(Keys::Space)) {
-        camera.AdjustPosition(0.0f, cameraSpeed, 0.0f);
-    }
-    if (game->InputDev->IsKeyDown(Keys::LeftShift)) {
-         camera.AdjustPosition(0.0f, -cameraSpeed, 0.0f);
-    }
-
-    if (game->InputDev->IsKeyDown(Keys::Up)) {
-        camera.AdjustRotation(-cameraSpeed, 0.0f, 0.0f);
-    }
-
-    if (game->InputDev->IsKeyDown(Keys::Down)) {
-        camera.AdjustRotation(cameraSpeed, 0.0f, 0.0f);
-    }
-
-    if (game->InputDev->IsKeyDown(Keys::Left)) {
-        camera.AdjustRotation(0.0f, -cameraSpeed, 0.0f);
-    }
-
-    if (game->InputDev->IsKeyDown(Keys::Right)) {
-        camera.AdjustRotation(0.0f, cameraSpeed, 0.0f);
-    }
-
-    // Глобальные переменные
-    static bool isAnimating = false;  // Флаг анимации
-    static float t = 0.0f;            // Прогресс интерполяции (0-1)
-
-    auto basePos = XMVectorSet(0.0f, 0.0f, -2.0f, 0.0f);
-    auto baseRot = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-
-    if (game->InputDev->IsKeyDown(Keys::F1)) {
-        isAnimating = true;  // Запускаем анимацию
-        t = 0.0f;            // Обнуляем интерполяцию
-    }
-
-    if (game->InputDev->IsKeyDown(Keys::F2)) {
-        isAnimating = true;  // Запускаем анимацию
-        t = 0.0f;            // Обнуляем интерполяцию
-        const auto* sphere = dynamic_cast<SphereComponent*>(game->Components[1]);
-        basePos = XMVectorSet(sphere->GetPosition().x, sphere->GetPosition().y, sphere->GetPosition().z, 0.0f);
-    }
-
-    if (isAnimating) {
+    if (isFollowing) {
+        auto followingSpherePos = followingSphere->GetPosition();
+        auto followingSphereRot = followingSphere->GetRotation();
+        basePos = XMVectorSet(followingSpherePos.x, followingSpherePos.y, followingSpherePos.z - 0.5 - this->radius_, 0.0f);
+        baseRot = XMVectorSet(followingSphereRot.x, followingSphereRot.y, followingSphereRot.z, 0.0f);
         auto currentPos = camera.GetPositionVector();
         auto currentRot = camera.GetRotationVector();
 
-        // Увеличиваем t (чем меньше шаг, тем плавнее анимация)
-        t += 0.001f;
-        if (t > 1.0f) {
-            t = 1.0f;
-            isAnimating = false; // Завершаем анимацию
+        interpolation += 0.001f;
+        if (interpolation > 1.0f) {
+            interpolation = 1.0f;
         }
 
-        float smoothT = SmoothStep(t);  // Применяем сглаживание
+        float smoothT = SmoothStep(interpolation);  // Применяем сглаживание
         auto newPos = XMVectorLerp(currentPos, basePos, smoothT);
         auto newRot = XMVectorLerp(currentRot, baseRot, smoothT);
         camera.SetPosition(newPos);
@@ -356,12 +308,35 @@ void SphereComponent::RotateAroundY(float angle, float x, float y, float z) {
     DirectX::XMFLOAT3 pos = GetPosition();
     float localX = -(x - pos.x);
     float localY = -(y - pos.y);
+    float localZ = -(z - pos.z);
 
-    DirectX::XMMATRIX translationToPivot = DirectX::XMMatrixTranslation(-localX, -localY, 0.0f);
+    DirectX::XMMATRIX translationToPivot = DirectX::XMMatrixTranslation(-localX, -localY, -localZ);
     DirectX::XMMATRIX rotationMat = DirectX::XMMatrixRotationY(angle);
-    DirectX::XMMATRIX translationBack = DirectX::XMMatrixTranslation(localX, localY, 0.0f);
+    DirectX::XMMATRIX translationBack = DirectX::XMMatrixTranslation(localX, localY, localZ);
 
     mat = translationBack * rotationMat * translationToPivot * mat;
+}
+
+void SphereComponent::RotateAroundSphereY(float angle, float sunX, float sunY, float sunZ, float orbitRadius) {
+    DirectX::XMFLOAT3 pos = GetPosition();
+
+    float localX = pos.x - sunX;
+    float localY = pos.y - sunY;
+    float localZ = pos.z - sunZ;
+
+    DirectX::XMMATRIX translationToCenter = DirectX::XMMatrixTranslation(-sunX, -sunY, -sunZ);
+    DirectX::XMMATRIX rotationMat = DirectX::XMMatrixRotationY(angle);
+    DirectX::XMMATRIX translationBack = DirectX::XMMatrixTranslation(sunX, sunY, sunZ);
+
+    // Применяем вращение
+    DirectX::XMVECTOR positionVec = DirectX::XMVectorSet(localX, localY, localZ, 1.0f);
+    positionVec = DirectX::XMVector3Transform(positionVec, rotationMat);
+
+    DirectX::XMFLOAT3 newPos;
+    DirectX::XMStoreFloat3(&newPos, positionVec);
+    SetPosition(newPos.x + sunX, newPos.y + sunY, newPos.z + sunZ);
+
+    mat = translationBack * rotationMat * translationToCenter * mat;
 }
 
 void SphereComponent::SetPosition(float x, float y, float z) {
@@ -371,3 +346,86 @@ void SphereComponent::SetPosition(float x, float y, float z) {
 XMFLOAT3 SphereComponent::GetPosition() const {
     return {mat.r[3].m128_f32[0], mat.r[3].m128_f32[1], mat.r[3].m128_f32[2]};
 }
+
+XMFLOAT3 SphereComponent::GetRotation() const {
+    return {rotationAngle, 0.0f, 0.0f};
+}
+
+void SphereComponent::HandleCameraInput() {
+    if (game->InputDev->IsKeyDown(Keys::W)) {
+        camera.AdjustPosition(camera.GetForwardVector() * cameraSpeed);
+        isFollowing = false;
+    }
+    if (game->InputDev->IsKeyDown(Keys::A)) {
+        camera.AdjustPosition(camera.GetLeftVector() * cameraSpeed);
+        isFollowing = false;
+    }
+
+    if (game->InputDev->IsKeyDown(Keys::S)) {
+        camera.AdjustPosition(camera.GetBackwardVector() * cameraSpeed);
+        isFollowing = false;
+    }
+
+    if (game->InputDev->IsKeyDown(Keys::D)) {
+        camera.AdjustPosition(camera.GetRightVector() * cameraSpeed);
+        isFollowing = false;
+    }
+
+    if (game->InputDev->IsKeyDown(Keys::Space)) {
+        camera.AdjustPosition(0.0f, cameraSpeed, 0.0f);
+        isFollowing = false;
+    }
+    if (game->InputDev->IsKeyDown(Keys::LeftShift)) {
+        camera.AdjustPosition(0.0f, -cameraSpeed, 0.0f);
+        isFollowing = false;
+    }
+
+    if (game->InputDev->IsKeyDown(Keys::Up)) {
+        camera.AdjustRotation(-cameraSpeed, 0.0f, 0.0f);
+    }
+
+    if (game->InputDev->IsKeyDown(Keys::Down)) {
+        camera.AdjustRotation(cameraSpeed, 0.0f, 0.0f);
+    }
+
+    if (game->InputDev->IsKeyDown(Keys::Left)) {
+        camera.AdjustRotation(0.0f, -cameraSpeed, 0.0f);
+    }
+
+    if (game->InputDev->IsKeyDown(Keys::Right)) {
+        camera.AdjustRotation(0.0f, cameraSpeed, 0.0f);
+    }
+
+    if (game->InputDev->IsKeyDown(Keys::F1)) {
+        auto* sphere = dynamic_cast<SphereComponent*>(game->Components[0]);
+        followingSphere = sphere;
+        isFollowing = true;
+        interpolation = 0.0f;
+    }
+
+    if (game->InputDev->IsKeyDown(Keys::F2)) {
+        auto* sphere = dynamic_cast<SphereComponent*>(game->Components[1]);
+        followingSphere = sphere;
+        isFollowing = true;
+        interpolation = 0.0f;
+    }
+    if (game->InputDev->IsKeyDown(Keys::F3)) {
+        auto* sphere = dynamic_cast<SphereComponent*>(game->Components[2]);
+        followingSphere = sphere;
+        isFollowing = true;
+        interpolation = 0.0f;
+    }
+    if (game->InputDev->IsKeyDown(Keys::F4)) {
+        auto* sphere = dynamic_cast<SphereComponent*>(game->Components[3]);
+        followingSphere = sphere;
+        isFollowing = true;
+        interpolation = 0.0f;
+    }
+    if (game->InputDev->IsKeyDown(Keys::F5)) {
+        auto* sphere = dynamic_cast<SphereComponent*>(game->Components[4]);
+        followingSphere = sphere;
+        isFollowing = true;
+        interpolation = 0.0f;
+    }
+}
+

@@ -56,9 +56,13 @@ public:
 	void SetPosition(float x, float y, float z);
 	void SetRotation(float angle);
 	XMFLOAT3 GetPosition() const;
+	XMFLOAT3 GetRotation() const;
 	void RotateAround(SphereComponent* center, float distance, float angle);
 	void RotateAroundY(float angle, float x, float y, float z);
 	void UpdateWorldMatrix();
 	void BindCameraToSphere(SphereComponent* sphere);
+	void RotateAroundSphereY(float angle, float sphereX, float sphereY, float sphereZ, float radius);
+	void FollowCamera(SphereComponent* sphereToFollow) const;
+	void HandleCameraInput();
 };
 

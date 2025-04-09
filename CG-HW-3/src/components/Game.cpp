@@ -169,7 +169,7 @@ void Game::Run()
 		}
 
 		Context->ClearState();
-		Context->OMSetRenderTargets(1, &RenderView, nullptr);
+		Context->OMSetRenderTargets(1, &RenderView, depthStencilView);
 
 		Update();
 
@@ -202,7 +202,7 @@ void Game::Draw()
 {
 	float color[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	Context->ClearRenderTargetView(RenderView, color);
-	Context->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	Context->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
 	for (auto c : Components)
 	{
@@ -271,7 +271,7 @@ void Game::PrepareResources()
 	depthDesc.Height = Display->ClientHeight;
 	depthDesc.MipLevels = 1;
 	depthDesc.ArraySize = 1;
-	depthDesc.Format = DXGI_FORMAT_D32_FLOAT;  // Тип глубины
+	depthDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;  // Тип глубины
 	depthDesc.SampleDesc.Count = 1;  // Без антиалиасинга
 	depthDesc.Usage = D3D11_USAGE_DEFAULT;
 	depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
@@ -279,31 +279,31 @@ void Game::PrepareResources()
 	// Создаем текстуру глубины
 	HRESULT hr = Device->CreateTexture2D(&depthDesc, nullptr, &depthStencilBuffer);
 	if (FAILED(hr)) {
-		// Обработка ошибки
+		std::cout << "Failed to create depthStencilBuffer: " << std::hex << hr << std::endl;
 	}
 
 	// Создание DepthStencilView для работы с этим буфером
 	D3D11_DEPTH_STENCIL_VIEW_DESC depthViewDesc = {};
-	depthViewDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	depthViewDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	depthViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	depthViewDesc.Texture2D.MipSlice = 0;
 
 	hr = Device->CreateDepthStencilView(depthStencilBuffer, &depthViewDesc, &depthStencilView);
 	if (FAILED(hr)) {
-		// Обработка ошибки
+		std::cout << "Failed to create depthStencilView: " << std::hex << hr << std::endl;
 	}
 
 	// Создание DepthStencilState для настройки поведения при рендеринге
 	D3D11_DEPTH_STENCIL_DESC depthStencilDesc = {};
 	depthStencilDesc.DepthEnable = true;
 	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-	depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;  // Меньше или равно для правильной прорисовки
+	depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS;  // Меньше или равно для правильной прорисовки
 
 	hr = Device->CreateDepthStencilState(&depthStencilDesc, &depthStencilState);
 	if (FAILED(hr)) {
-		// Обработка ошибки
+		std::cout << "Failed to create depthStencilState: " << std::hex << hr << std::endl;
 	}
-	Context->OMSetDepthStencilState(depthStencilState, 0);
+	Context->OMSetDepthStencilState(depthStencilState, 1);
 	CreateBackBuffer();
 }
 

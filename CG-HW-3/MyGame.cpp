@@ -54,7 +54,8 @@ void MyGame::Draw()
 {
 	float color[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	Context->ClearRenderTargetView(RenderView, color);
-	
+	Context->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+
 	for (auto c : Components)
 	{
 		c->Draw();
