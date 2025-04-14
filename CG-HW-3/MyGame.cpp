@@ -11,39 +11,39 @@
 
 MyGame::MyGame() : Game(L"MyGame", 800, 800)
 {
-	auto sphere = new SphereComponent(this, L"..\\src\\textures\\sun.dds", PlanetRadius::Sun, 0.01f);
-	Components.push_back(sphere);
+	auto sun = new SphereComponent(this, L"..\\src\\textures\\sun.dds", PlanetRadius::Sun);
+	sun->SetOrbitingTarget(sun, PlanetRadius::Sun, PlanetVelocity::Mercury);
+	Components.push_back(sun);
 
-	auto mercury = new SphereComponent(this, L"..\\src\\textures\\mercury.dds", PlanetRadius::Mercury, PlanetVelocity::Mercury);
-	mercury->SetPosition(0.0f, 0.0f, -PlanetDistanceToSun::Mercury);
+	auto mercury = new SphereComponent(this, L"..\\src\\textures\\mercury.dds", PlanetRadius::Mercury);
+	mercury->SetPosition(XMFLOAT3(0.0f, 0.0f, -PlanetDistanceToSun::Mercury));
+	mercury->SetOrbitingTarget(sun, PlanetRadius::Mercury, PlanetVelocity::Mercury * 100);
 	Components.push_back(mercury);
 
-
-	auto venus = new SphereComponent(this, L"..\\src\\textures\\venus_surface.dds", PlanetRadius::Venus, PlanetVelocity::Venus);
-	venus->SetPosition(0.0f, 0.0f, -PlanetDistanceToSun::Venus);
+	auto venus = new SphereComponent(this, L"..\\src\\textures\\venus_surface.dds", PlanetRadius::Venus);
+	venus->SetPosition(XMFLOAT3(0.0f, 0.0f, -PlanetDistanceToSun::Venus));
+	venus->SetOrbitingTarget(sun, PlanetRadius::Venus, PlanetVelocity::Venus * 100);
 	Components.push_back(venus);
 
-	auto earth = new SphereComponent(this, L"..\\src\\textures\\earth.dds", PlanetRadius::Earth, PlanetVelocity::Earth);
-	earth->SetPosition(0.0f, 0.0f, -PlanetDistanceToSun::Earth);
+	auto earth = new SphereComponent(this, L"..\\src\\textures\\earth.dds", PlanetRadius::Earth);
+	earth->SetPosition(XMFLOAT3(0.0f, 0.0f, -PlanetDistanceToSun::Earth));
+	earth->SetOrbitingTarget(sun, PlanetRadius::Earth, PlanetVelocity::Earth * 500);
 	Components.push_back(earth);
 
-	auto mars = new SphereComponent(this, L"..\\src\\textures\\mars.dds", PlanetRadius::Mars, PlanetVelocity::Mars);
-	mars->SetPosition(0.0f, 0.0f, -PlanetDistanceToSun::Mars);
+	auto mars = new SphereComponent(this, L"..\\src\\textures\\mars.dds", PlanetRadius::Mars);
+	mars->SetPosition(XMFLOAT3(0.0f, 0.0f, -PlanetDistanceToSun::Mars));
+	mars->SetOrbitingTarget(sun, PlanetRadius::Mars, PlanetVelocity::Mars * 100);
 	Components.push_back(mars);
 
-	auto jupiter = new SphereComponent(this, L"..\\src\\textures\\mars.dds", PlanetRadius::Jupiter, PlanetVelocity::Jupiter);
-	jupiter->SetPosition(0.0f, 0.0f, -PlanetDistanceToSun::Jupiter);
+	auto jupiter = new SphereComponent(this, L"..\\src\\textures\\mars.dds", PlanetRadius::Jupiter);
+	jupiter->SetPosition(XMFLOAT3(0.0f, 0.0f, -PlanetDistanceToSun::Jupiter));
+	jupiter->SetOrbitingTarget(sun, PlanetRadius::Jupiter, PlanetVelocity::Jupiter * 100);
 	Components.push_back(jupiter);
 
-	//auto triangle = new TriangleComponent(this);
-	//triangle->SetPosition(-0.5f, -0.5f);
-	//Components.push_back(triangle);
-	//auto triangle2 = new TriangleComponent(this);
-	//triangle->SetPosition(-0.3f, -0.3f);
-	//Components.push_back(triangle2);
-	//auto sphere = new SphereComponent(this);
-	//sphere->Initialize();
-	//Components.push_back(sphere);
+	auto moon = new SphereComponent(this, L"..\\src\\textures\\moon.dds", PlanetRadius::Moon);
+	moon->SetPosition(XMFLOAT3(0.0f, 0.0f, -PlanetDistanceToSun::Earth - 0.5));
+	moon->SetOrbitingTarget(earth, PlanetRadius::Moon, PlanetVelocity::Moon * 1000);
+	Components.push_back(moon);
 }
 
 MyGame::~MyGame()
@@ -95,33 +95,4 @@ void MyGame::Update() {
 	if (InputDev->IsKeyDown(Keys::Z)) {
 		camera.AdjustPosition(0.0f, cameraSpeed, 0.0f);
 	}
-}
-
-void MyGame::BindTriangleToCannon(TriangleComponent* triangle, RectangleComponent* cannon)
-{
-	auto pos = cannon->GetPosition();
-	float x = 0.025;
-	float y = 0.15;
-	float angle = cannon->GetRotation();
-
-	float topLeftX = pos.x;
-	float topLeftY = pos.y + y;
-	float topRightX = pos.x + x;
-	float topRightY = pos.y + y;
-
-	float angleRad = DirectX::XMConvertToRadians(angle);
-
-	float rotatedTopLeftX = (topLeftX - pos.x) * cos(angleRad) - (topLeftY - pos.y) * sin(angleRad) + pos.x;
-	float rotatedTopLeftY = (topLeftX - pos.x) * sin(angleRad) + (topLeftY - pos.y) * cos(angleRad) + pos.y;
-
-	float rotatedTopRightX = (topRightX - pos.x) * cos(angleRad) - (topRightY - pos.y) * sin(angleRad) + pos.x;
-	float rotatedTopRightY = (topRightX - pos.x) * sin(angleRad) + (topRightY - pos.y) * cos(angleRad) + pos.y;
-
-	float rotatedCenterX = (rotatedTopLeftX + rotatedTopRightX) / 2;
-	float rotatedCenterY = (rotatedTopLeftY + rotatedTopRightY) / 2;
-
-	triangle->Initialize();
-	triangle->SetPosition(rotatedCenterX, rotatedCenterY);
-	triangle->SetRotation(angle);
-	triangle->SetVelocity(0.01 * sin(angleRad), 0.01 * cos(angleRad));
 }

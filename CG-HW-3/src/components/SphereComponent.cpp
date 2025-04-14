@@ -11,9 +11,8 @@ static bool isFollowing = false;
 static float interpolation = 0.0f;
 static SphereComponent* followingSphere;
 
-SphereComponent::SphereComponent(Game *g, std::wstring texturePath, float radius, float orbitalVelocity)
-    : GameComponent(g), mat(XMMatrixIdentity()),
-      texturePath(texturePath), radius_(radius), orbitalVelocity(orbitalVelocity)
+SphereComponent::SphereComponent(Game *g, std::wstring texturePath, float radius)
+    : GameComponent(g), mat(XMMatrixIdentity()), texturePath(texturePath), radius_(radius)
 {
     float phiStep = XM_PI / stackCount_;
     float thetaStep = 2.0f * XM_PI / sliceCount_;
@@ -253,9 +252,7 @@ void SphereComponent::Draw() {
 }
 
 void SphereComponent::Update() {
-    auto pos = GetPosition();
-    RotateAroundSphereY(orbitalVelocity, 0.0f, 0.0f, 0.0f, pos.z);
-
+    UpdateOrbit(0.01f);
     HandleCameraInput();
 
     static XMVECTOR basePos;
@@ -264,8 +261,8 @@ void SphereComponent::Update() {
     if (isFollowing) {
         auto followingSpherePos = followingSphere->GetPosition();
         auto followingSphereRot = followingSphere->GetRotation();
-        basePos = XMVectorSet(followingSpherePos.x, followingSpherePos.y, followingSpherePos.z - 0.5 - this->radius_, 0.0f);
-        baseRot = XMVectorSet(followingSphereRot.x, followingSphereRot.y, followingSphereRot.z, 0.0f);
+        basePos = XMVectorSet(followingSpherePos.m128_f32[0], followingSpherePos.m128_f32[1], followingSpherePos.m128_f32[2] - 0.5 - this->radius_, 0.0f);
+        baseRot = XMVectorSet(followingSphereRot.m128_f32[0], followingSphereRot.m128_f32[1], followingSphereRot.m128_f32[2], 0.0f);
         auto currentPos = camera.GetPositionVector();
         auto currentRot = camera.GetRotationVector();
 
@@ -274,7 +271,7 @@ void SphereComponent::Update() {
             interpolation = 1.0f;
         }
 
-        float smoothT = SmoothStep(interpolation);  // Применяем сглаживание
+        float smoothT = SmoothStep(interpolation);
         auto newPos = XMVectorLerp(currentPos, basePos, smoothT);
         auto newRot = XMVectorLerp(currentRot, baseRot, smoothT);
         camera.SetPosition(newPos);
@@ -295,61 +292,41 @@ SphereComponent::~SphereComponent() {
     DestroyResources();
 }
 
-void SphereComponent::RotateByCenter(float angle) {
-    rotationAngle += angle;
-    XMFLOAT3 pos = GetPosition();
-    XMMATRIX translationMat = XMMatrixTranslation(pos.x, pos.y, pos.z);
-    XMMATRIX rotationMat = XMMatrixRotationY(rotationAngle);
-    XMMATRIX scaleMat = XMMatrixScaling(1.0f, 1.0f, 1.0f);
-    mat = scaleMat * rotationMat * translationMat;
+void SphereComponent::UpdateOrbit(float deltaTime) {
+    if (!orbitOffsetInitialized)
+    {
+        orbitOffset = GetPosition() - orbitingTarget->GetPosition();
+        orbitOffsetInitialized = true;
+    }
+
+    orbitAngle += orbitSpeed * deltaTime;
+    selfRotationAngle += selfRotationSpeed * deltaTime;
+
+    XMMATRIX orbitRotation = XMMatrixRotationY(orbitAngle);
+    XMVECTOR rotatedOffset = XMVector3Transform(orbitOffset, orbitRotation);
+
+    XMVECTOR targetPos = orbitingTarget->GetPosition();
+    XMVECTOR newPos = targetPos + rotatedOffset;
+
+    SetPosition(XMFLOAT3(newPos.m128_f32[0], newPos.m128_f32[1], newPos.m128_f32[2]));
+
+    XMMATRIX selfRotation = XMMatrixRotationY(selfRotationAngle);
+
+    mat = selfRotation * XMMatrixTranslationFromVector(newPos);
 }
 
-void SphereComponent::RotateAroundY(float angle, float x, float y, float z) {
-    DirectX::XMFLOAT3 pos = GetPosition();
-    float localX = -(x - pos.x);
-    float localY = -(y - pos.y);
-    float localZ = -(z - pos.z);
-
-    DirectX::XMMATRIX translationToPivot = DirectX::XMMatrixTranslation(-localX, -localY, -localZ);
-    DirectX::XMMATRIX rotationMat = DirectX::XMMatrixRotationY(angle);
-    DirectX::XMMATRIX translationBack = DirectX::XMMatrixTranslation(localX, localY, localZ);
-
-    mat = translationBack * rotationMat * translationToPivot * mat;
+XMVECTOR SphereComponent::GetPosition() const {
+    XMVECTOR scale, rotQuat, trans;
+    XMMatrixDecompose(&scale, &rotQuat, &trans, mat);
+    return trans;
 }
 
-void SphereComponent::RotateAroundSphereY(float angle, float sunX, float sunY, float sunZ, float orbitRadius) {
-    DirectX::XMFLOAT3 pos = GetPosition();
-
-    float localX = pos.x - sunX;
-    float localY = pos.y - sunY;
-    float localZ = pos.z - sunZ;
-
-    DirectX::XMMATRIX translationToCenter = DirectX::XMMatrixTranslation(-sunX, -sunY, -sunZ);
-    DirectX::XMMATRIX rotationMat = DirectX::XMMatrixRotationY(angle);
-    DirectX::XMMATRIX translationBack = DirectX::XMMatrixTranslation(sunX, sunY, sunZ);
-
-    // Применяем вращение
-    DirectX::XMVECTOR positionVec = DirectX::XMVectorSet(localX, localY, localZ, 1.0f);
-    positionVec = DirectX::XMVector3Transform(positionVec, rotationMat);
-
-    DirectX::XMFLOAT3 newPos;
-    DirectX::XMStoreFloat3(&newPos, positionVec);
-    SetPosition(newPos.x + sunX, newPos.y + sunY, newPos.z + sunZ);
-
-    mat = translationBack * rotationMat * translationToCenter * mat;
+XMVECTOR SphereComponent::GetRotation() const {
+    XMVECTOR scale, rotQuat, trans;
+    XMMatrixDecompose(&scale, &rotQuat, &trans, mat);
+    return rotQuat;
 }
 
-void SphereComponent::SetPosition(float x, float y, float z) {
-    mat.r[3] = DirectX::XMVectorSet(x, y, z, 1.0f);
-}
-
-XMFLOAT3 SphereComponent::GetPosition() const {
-    return {mat.r[3].m128_f32[0], mat.r[3].m128_f32[1], mat.r[3].m128_f32[2]};
-}
-
-XMFLOAT3 SphereComponent::GetRotation() const {
-    return {rotationAngle, 0.0f, 0.0f};
-}
 
 void SphereComponent::HandleCameraInput() {
     if (game->InputDev->IsKeyDown(Keys::W)) {
@@ -429,3 +406,38 @@ void SphereComponent::HandleCameraInput() {
     }
 }
 
+void SphereComponent::SetOrbitingTarget(SphereComponent* target, float radius, float speed) {
+    orbitingTarget = target;
+    orbitRadius = radius;
+    orbitSpeed = speed;
+    orbitAngle = 0.0f;
+}
+
+void SphereComponent::SetWorldMatrix(const XMMATRIX& matrix) {
+    mat = matrix;
+}
+
+XMMATRIX SphereComponent::GetWorldMatrix() const {
+    return mat;
+}
+
+void SphereComponent::SetPosition(const XMFLOAT3& newPosition) {
+    XMVECTOR scale, rotation, translation;
+    XMMatrixDecompose(&scale, &rotation, &translation, mat);
+
+    XMVECTOR posVec = XMLoadFloat3(&newPosition);
+    mat = XMMatrixScalingFromVector(scale) *
+            XMMatrixRotationQuaternion(rotation) *
+            XMMatrixTranslationFromVector(posVec);
+}
+
+void SphereComponent::SetRotation(const XMFLOAT4& newRotationQuat) {
+    // Разбираем world
+    XMVECTOR scale, rotation, translation;
+    XMMatrixDecompose(&scale, &rotation, &translation, mat);
+
+    XMVECTOR rotVec = XMLoadFloat4(&newRotationQuat);
+    mat = XMMatrixScalingFromVector(scale) *
+            XMMatrixRotationQuaternion(rotVec) *
+            XMMatrixTranslationFromVector(translation);
+}

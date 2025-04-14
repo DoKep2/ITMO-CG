@@ -26,26 +26,32 @@ private:
 	ConstantBuffer<CB_VS_vertexshader> constantBuffer;
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerState;
 	ID3D11ShaderResourceView* textureSRV;
+	ID3D11Buffer* vb_;
+	ID3D11Buffer* ib_;
+
+	UINT strides_[1];
+	UINT offsets_[1];
 	int indices_[num * num * 6];
+
 	XMMATRIX mat = XMMatrixIdentity();
-	float rotationAngle = 0.0f;
-	SimpleMath::Vector2 velocity_;
-	float orbitalVelocity;
-	float orbitAngle_;
-	SphereComponent* orbitCenter_;
-	float orbitDistance_;
+	SphereComponent* orbitingTarget = nullptr;
+	float orbitRadius = 0.0f;
+	float orbitSpeed = 0.0f;
+	float orbitAngle = 0.0f;
+	float selfRotationAngle = 0.0f;
+	float selfRotationSpeed = 1.0f;
+	XMVECTOR orbitOffset = XMVectorZero();
+	bool orbitOffsetInitialized = false;
+
 	std::wstring texturePath;
+
 	static constexpr int stackCount_ = num;
 	static constexpr int sliceCount_ = num;
 	const float radius_ = 0.5;
-	ID3D11Buffer* vb_;
-	ID3D11Buffer* ib_;
-	UINT strides_[1];
-	UINT offsets_[1];
 
 	void RotateByCenter(float angle);
 public:
-	SphereComponent(Game* g, std::wstring texturePath, float radius, float orbitalVelocity = 0.0f);
+	SphereComponent(Game* g, std::wstring texturePath, float radius);
 	Camera camera;
 	virtual ~SphereComponent();
 	void DestroyResources() override;
@@ -53,16 +59,18 @@ public:
 	void Initialize() override;
 	void Update() override;
 	void Reload() override;
-	void SetPosition(float x, float y, float z);
-	void SetRotation(float angle);
-	XMFLOAT3 GetPosition() const;
-	XMFLOAT3 GetRotation() const;
-	void RotateAround(SphereComponent* center, float distance, float angle);
-	void RotateAroundY(float angle, float x, float y, float z);
+	void SetPosition(const XMFLOAT3& newPosition);
+	void SetRotation(const XMFLOAT4& newRotationQuat);
+	XMVECTOR GetPosition() const;
+	XMVECTOR GetRotation() const;
+
 	void UpdateWorldMatrix();
 	void BindCameraToSphere(SphereComponent* sphere);
-	void RotateAroundSphereY(float angle, float sphereX, float sphereY, float sphereZ, float radius);
 	void FollowCamera(SphereComponent* sphereToFollow) const;
 	void HandleCameraInput();
+	void SetOrbitingTarget(SphereComponent* target, float orbitRadius, float orbitSpeed);
+	void SetWorldMatrix(const XMMATRIX& world);
+	XMMATRIX GetWorldMatrix() const;
+	void UpdateOrbit(float deltaTime);
 };
 

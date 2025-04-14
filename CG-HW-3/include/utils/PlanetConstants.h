@@ -24,6 +24,7 @@ namespace PlanetRadius {
     constexpr float Saturn  = 58232.0f * scale;
     constexpr float Uranus  = 25362.0f * scale;
     constexpr float Neptune = 24622.0f * scale;
+    constexpr float Moon = 6371.0f * scale * 0.25;
 }
 
 namespace PlanetVelocity {
@@ -31,11 +32,12 @@ namespace PlanetVelocity {
 
     constexpr float Mercury = 47.87f * scale;  // Скорость Меркурия
     constexpr float Venus   = 35.02f * scale;  // Скорость Венеры
-    constexpr float Earth   = 29.78f * scale;  // Скорость Земли
+    constexpr float Earth   = 29.78f * scale / 10.0;  // Скорость Земли
     constexpr float Mars    = 24.07f * scale;  // Скорость Марса
     constexpr float Jupiter = 13.07f * scale;  // Скорость Юпитера
     constexpr float Saturn  = 9.69f * scale;   // Скорость Сатурна
     constexpr float Uranus  = 6.81f * scale;   // Скорость Урана
     constexpr float Neptune = 5.43f * scale;   // Скорость Нептуна
+    constexpr float Moon = 29.78f * scale / 10.0;   // Скорость Нептуна
 }
 
