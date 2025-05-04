@@ -73,6 +73,14 @@ build CMakeFiles\DirectXExample.dir\src\components\GameComponent.cpp.obj: CXX_CO
   TARGET_COMPILE_PDB = CMakeFiles\DirectXExample.dir\
   TARGET_PDB = DirectXExample.pdb
 
+build CMakeFiles\DirectXExample.dir\src\components\GridComponent.cpp.obj: CXX_COMPILER__DirectXExample_unscanned_Debug C$:\Users\sergo\source\repos\CG\ITMO-CG\CG-HW-3\src\components\GridComponent.cpp || cmake_object_order_depends_target_DirectXExample
+  FLAGS = /DWIN32 /D_WINDOWS /W3 /GR /EHsc -O0 -g -D_DEBUG -D_CONSOLE -D_UNICODE -DUNICODE -fno-strict-aliasing /MDd /Zi /Ob0 /Od /RTC1
+  INCLUDES = -I"C:\Program Files (x86)\Windows Kits\10\Include\10.0.26100.0\um" -I"C:\Program Files (x86)\Windows Kits\10\Include\10.0.26100.0\shared" -IC:\Users\sergo\source\repos\CG\ITMO-CG\CG-HW-3\include\camera -IC:\Users\sergo\source\repos\CG\ITMO-CG\CG-HW-3\include\components -IC:\Users\sergo\source\repos\CG\ITMO-CG\CG-HW-3\include\input -IC:\Users\sergo\source\repos\CG\ITMO-CG\CG-HW-3\include\textures -IC:\Users\sergo\source\repos\CG\ITMO-CG\CG-HW-3\include\utils
+  OBJECT_DIR = CMakeFiles\DirectXExample.dir
+  OBJECT_FILE_DIR = CMakeFiles\DirectXExample.dir\src\components
+  TARGET_COMPILE_PDB = CMakeFiles\DirectXExample.dir\
+  TARGET_PDB = DirectXExample.pdb
+
 build CMakeFiles\DirectXExample.dir\src\components\OrbitComponent.cpp.obj: CXX_COMPILER__DirectXExample_unscanned_Debug C$:\Users\sergo\source\repos\CG\ITMO-CG\CG-HW-3\src\components\OrbitComponent.cpp || cmake_object_order_depends_target_DirectXExample
   FLAGS = /DWIN32 /D_WINDOWS /W3 /GR /EHsc -O0 -g -D_DEBUG -D_CONSOLE -D_UNICODE -DUNICODE -fno-strict-aliasing /MDd /Zi /Ob0 /Od /RTC1
   INCLUDES = -I"C:\Program Files (x86)\Windows Kits\10\Include\10.0.26100.0\um" -I"C:\Program Files (x86)\Windows Kits\10\Include\10.0.26100.0\shared" -IC:\Users\sergo\source\repos\CG\ITMO-CG\CG-HW-3\include\camera -IC:\Users\sergo\source\repos\CG\ITMO-CG\CG-HW-3\include\components -IC:\Users\sergo\source\repos\CG\ITMO-CG\CG-HW-3\include\input -IC:\Users\sergo\source\repos\CG\ITMO-CG\CG-HW-3\include\textures -IC:\Users\sergo\source\repos\CG\ITMO-CG\CG-HW-3\include\utils
@@ -169,7 +177,7 @@ build CMakeFiles\DirectXExample.dir\CG-HW-1.cpp.obj: CXX_COMPILER__DirectXExampl
 #############################################
 # Link the executable DirectXExample.exe
 
-build DirectXExample.exe: CXX_EXECUTABLE_LINKER__DirectXExample_Debug CMakeFiles\DirectXExample.dir\src\camera\Camera.cpp.obj CMakeFiles\DirectXExample.dir\src\components\Game.cpp.obj CMakeFiles\DirectXExample.dir\src\components\GameComponent.cpp.obj CMakeFiles\DirectXExample.dir\src\components\OrbitComponent.cpp.obj CMakeFiles\DirectXExample.dir\src\components\RectangleComponent.cpp.obj CMakeFiles\DirectXExample.dir\src\components\SphereComponent.cpp.obj CMakeFiles\DirectXExample.dir\src\components\TriangleComponent.cpp.obj CMakeFiles\DirectXExample.dir\src\input\InputDevice.cpp.obj CMakeFiles\DirectXExample.dir\src\textures\DDSTextureLoader.cpp.obj CMakeFiles\DirectXExample.dir\src\utils\Delegates.cpp.obj CMakeFiles\DirectXExample.dir\src\utils\DisplayWin32.cpp.obj CMakeFiles\DirectXExample.dir\src\utils\SimpleMath.cpp.obj CMakeFiles\DirectXExample.dir\MyGame.cpp.obj CMakeFiles\DirectXExample.dir\CG-HW-1.cpp.obj
+build DirectXExample.exe: CXX_EXECUTABLE_LINKER__DirectXExample_Debug CMakeFiles\DirectXExample.dir\src\camera\Camera.cpp.obj CMakeFiles\DirectXExample.dir\src\components\Game.cpp.obj CMakeFiles\DirectXExample.dir\src\components\GameComponent.cpp.obj CMakeFiles\DirectXExample.dir\src\components\GridComponent.cpp.obj CMakeFiles\DirectXExample.dir\src\components\OrbitComponent.cpp.obj CMakeFiles\DirectXExample.dir\src\components\RectangleComponent.cpp.obj CMakeFiles\DirectXExample.dir\src\components\SphereComponent.cpp.obj CMakeFiles\DirectXExample.dir\src\components\TriangleComponent.cpp.obj CMakeFiles\DirectXExample.dir\src\input\InputDevice.cpp.obj CMakeFiles\DirectXExample.dir\src\textures\DDSTextureLoader.cpp.obj CMakeFiles\DirectXExample.dir\src\utils\Delegates.cpp.obj CMakeFiles\DirectXExample.dir\src\utils\DisplayWin32.cpp.obj CMakeFiles\DirectXExample.dir\src\utils\SimpleMath.cpp.obj CMakeFiles\DirectXExample.dir\MyGame.cpp.obj CMakeFiles\DirectXExample.dir\CG-HW-1.cpp.obj
   FLAGS = /DWIN32 /D_WINDOWS /W3 /GR /EHsc -O0 -g -D_DEBUG -D_CONSOLE -D_UNICODE -DUNICODE -fno-strict-aliasing /MDd /Zi /Ob0 /Od /RTC1
   LINK_FLAGS = /machine:x64 /debug /INCREMENTAL /subsystem:console
   LINK_LIBRARIES = d3d11.lib  d2d1.lib  d3dcompiler.lib  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib

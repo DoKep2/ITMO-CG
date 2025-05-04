@@ -9,6 +9,8 @@
 
 #include "MyGame.h"
 
+#include <GridComponent.h>
+
 #include "OrbitComponent.h"
 
 MyGame::MyGame() : Game(L"MyGame", 800, 800)
@@ -78,6 +80,11 @@ MyGame::MyGame() : Game(L"MyGame", 800, 800)
 	moonOrbit->SetCenter(earth);
 
 	Components.push_back(moonOrbit);
+
+
+	auto grid = new GridComponent(this, 20, 1.0f);
+	Components.push_back(grid);
+
 }
 
 MyGame::~MyGame()
