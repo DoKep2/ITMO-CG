@@ -9,8 +9,12 @@
 
 #include "MyGame.h"
 
+#include "OrbitComponent.h"
+
 MyGame::MyGame() : Game(L"MyGame", 800, 800)
 {
+	// Создание орбиты
+
 	auto sun = new SphereComponent(this, L"..\\src\\textures\\sun.dds", PlanetRadius::Sun);
 	sun->SetOrbitingTarget(sun, PlanetRadius::Sun, PlanetVelocity::Mercury);
 	Components.push_back(sun);
@@ -44,6 +48,36 @@ MyGame::MyGame() : Game(L"MyGame", 800, 800)
 	moon->SetPosition(XMFLOAT3(0.0f, 0.0f, -PlanetDistanceToSun::Earth - 0.5));
 	moon->SetOrbitingTarget(earth, PlanetRadius::Moon, PlanetVelocity::Moon * 1000);
 	Components.push_back(moon);
+
+	auto* mercuryOrbit = new OrbitComponent(this, PlanetDistanceToSun::Mercury, 300);
+	mercuryOrbit->SetCenter(sun);
+
+	Components.push_back(mercuryOrbit);
+
+	auto* venusOrbit = new OrbitComponent(this, PlanetDistanceToSun::Venus, 300);
+	venusOrbit->SetCenter(sun);
+
+	Components.push_back(venusOrbit);
+
+	auto* earthOrbit = new OrbitComponent(this, PlanetDistanceToSun::Earth, 300);
+	earthOrbit->SetCenter(sun);
+
+	Components.push_back(earthOrbit);
+
+	auto* marsOrbit = new OrbitComponent(this, PlanetDistanceToSun::Mars, 300);
+	marsOrbit->SetCenter(sun);
+
+	Components.push_back(marsOrbit);
+
+	auto* jupiterOrbit = new OrbitComponent(this, PlanetDistanceToSun::Jupiter, 300);
+	jupiterOrbit->SetCenter(sun);
+
+	Components.push_back(jupiterOrbit);
+
+	auto* moonOrbit = new OrbitComponent(this, 0.5, 300);
+	moonOrbit->SetCenter(earth);
+
+	Components.push_back(moonOrbit);
 }
 
 MyGame::~MyGame()

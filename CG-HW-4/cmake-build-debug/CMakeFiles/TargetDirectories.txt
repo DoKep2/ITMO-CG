@@ -1,0 +1,3 @@
+C:/Users/sergo/source/repos/CG/ITMO-CG/CG-HW-4/cmake-build-debug/CMakeFiles/DirectXExample.dir
+C:/Users/sergo/source/repos/CG/ITMO-CG/CG-HW-4/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/sergo/source/repos/CG/ITMO-CG/CG-HW-4/cmake-build-debug/CMakeFiles/rebuild_cache.dir

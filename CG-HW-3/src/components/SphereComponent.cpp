@@ -264,7 +264,6 @@ void SphereComponent::Update() {
         basePos = XMVectorSet(followingSpherePos.m128_f32[0], followingSpherePos.m128_f32[1], followingSpherePos.m128_f32[2] - 0.5 - this->radius_, 0.0f);
         baseRot = XMVectorSet(followingSphereRot.m128_f32[0], followingSphereRot.m128_f32[1], followingSphereRot.m128_f32[2], 0.0f);
         auto currentPos = camera.GetPositionVector();
-        auto currentRot = camera.GetRotationVector();
 
         interpolation += 0.001f;
         if (interpolation > 1.0f) {
@@ -273,9 +272,7 @@ void SphereComponent::Update() {
 
         float smoothT = SmoothStep(interpolation);
         auto newPos = XMVectorLerp(currentPos, basePos, smoothT);
-        auto newRot = XMVectorLerp(currentRot, baseRot, smoothT);
         camera.SetPosition(newPos);
-        camera.SetRotation(newRot);
     }
     game->Context->UpdateSubresource(constantBuffer.Get(), 0, 0, &constantBuffer.data, 0, 0);
 }

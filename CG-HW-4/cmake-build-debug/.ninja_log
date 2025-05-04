@@ -1,0 +1,19 @@
+# ninja log v5
+16	2371	7664840402415450	CMakeFiles/DirectXExample.dir/src/camera/Camera.cpp.obj	25c63053ab1a9025
+80	4579	7665563214688676	CMakeFiles/DirectXExample.dir/src/components/TriangleComponent.cpp.obj	b3135cb198daa49a
+119	6836	7664840446885254	CMakeFiles/DirectXExample.dir/src/textures/DDSTextureLoader.cpp.obj	efea739fb0231092
+106	7890	7664840457314370	CMakeFiles/DirectXExample.dir/src/input/InputDevice.cpp.obj	f1eb277049a77ef7
+751	6811	7664840446782502	CMakeFiles/DirectXExample.dir/src/utils/Delegates.cpp.obj	709844ac835c7b9
+51	6798	7664840446626544	CMakeFiles/DirectXExample.dir/src/components/GameComponent.cpp.obj	fc1bd6f329deacd2
+34	4860	7666041332348638	CMakeFiles/DirectXExample.dir/src/components/SphereComponent.cpp.obj	bcdbcb73640aa9d1
+2372	8168	7664840460403805	CMakeFiles/DirectXExample.dir/src/utils/DisplayWin32.cpp.obj	430829668e53aad7
+126	4028	7665563209165426	CMakeFiles/DirectXExample.dir/CG-HW-1.cpp.obj	c8eb9d42d2b327f9
+4336	5921	7666043031667544	DirectXExample.exe	e5f805d4b534bc6f
+26	4503	7665995471875331	CMakeFiles/DirectXExample.dir/src/components/Game.cpp.obj	4a575c4c016ef650
+51	4572	7665563214613255	CMakeFiles/DirectXExample.dir/src/components/RectangleComponent.cpp.obj	3cd70e8ec830b178
+6812	9913	7664840477853219	CMakeFiles/DirectXExample.dir/src/utils/SimpleMath.cpp.obj	fe07e77e227b0462
+26	4334	7666043028160077	CMakeFiles/DirectXExample.dir/MyGame.cpp.obj	467bfc5cf1687e97
+25	3796	7665817280743286	CMakeFiles/DirectXExample.dir/src/components/PlaneComponent.cpp.obj	c73a98cee1320c8d
+25	4845	7666041332182756	CMakeFiles/DirectXExample.dir/src/components/Aboba.cpp.obj	775928c3f488ab96
+6798	10636	7664840485064162	CMakeFiles/DirectXExample.dir/src/utils/ModelLoader.cpp.obj	ec76189053fd7e2e
+54	4516	7665710243181036	CMakeFiles/DirectXExample.dir/src/utils/Mesh.cpp.obj	be62da688277f43c

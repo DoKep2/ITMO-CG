@@ -1,0 +1,4 @@
+"C:\Users\sergo\AppData\Local\Programs\CLion Nova\bin\cmake\win\x64\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Debug "-DCMAKE_MAKE_PROGRAM=C:/Users/sergo/AppData/Local/Programs/CLion Nova/bin/ninja/win/x64/ninja.exe" -DCMAKE_TOOLCHAIN_FILE=D:\vcpkg\vcpkg\scripts\buildsystems\vcpkg.cmake -G Ninja -S C:\Users\sergo\source\repos\CG\ITMO-CG\CG-HW-4 -B C:\Users\sergo\source\repos\CG\ITMO-CG\CG-HW-4\cmake-build-debug
+-- Configuring done (0.7s)
+-- Generating done (0.1s)
+-- Build files have been written to: C:/Users/sergo/source/repos/CG/ITMO-CG/CG-HW-4/cmake-build-debug

@@ -23,7 +23,8 @@ include_directories(${CMAKE_SOURCE_DIR}/include/components)
 
 add_executable(DirectXExample ${SOURCES}
         MyGame.cpp
-        CG-HW-1.cpp)
+        CG-HW-1.cpp
+        include/components/OrbitComponent.h)
 
 # Link libraries
 target_link_libraries(DirectXExample d3d11 d2d1 d3dcompiler)
