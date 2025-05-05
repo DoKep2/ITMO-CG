@@ -191,29 +191,31 @@ void Aboba::Draw() {
 void Aboba::Update() {
     if (isAttached) {
         // Поворот шара на текущем кадре
-        XMMATRIX rotationMatrix = XMMatrixRotationQuaternion(attachedSphere->GetRotation());
+        XMMATRIX rotationMatrix = XMMatrixRotationQuaternion(GetRotation());
 
         // Преобразуем локальный offset обратно в мировую систему
         XMVECTOR rotatedOffset = XMVector3Transform(attachedOffset, rotationMatrix);
 
         // Вычисляем новую мировую позицию предмета
         XMVECTOR newWorldPos = XMVectorAdd(attachedSphere->GetPosition(), rotatedOffset);
-
-        // Устанавливаем позицию предмета
         SetPosition(XMFLOAT3(
             newWorldPos.m128_f32[0],
             newWorldPos.m128_f32[1],
             newWorldPos.m128_f32[2]
         ));
 
-        // По желанию — копируем вращение шара (для эффекта прилипания)
-        XMVECTOR rot = attachedSphere->GetRotation();
+        XMVECTOR rot = XMQuaternionMultiply(XMQuaternionInverse(attachedInitialRotation), attachedSphere->GetRotation());
+
         SetRotation(XMFLOAT4(rot.m128_f32[0], rot.m128_f32[1], rot.m128_f32[2], rot.m128_f32[3]));
     }
 
     game->Context->UpdateSubresource(constantBuffer.Get(), 0, 0, &constantBuffer.data, 0, 0);
 }
 
+
+void Aboba::SetAttachedInitialRotation(XMVECTOR rot) {
+    attachedInitialRotation = rot;
+}
 
 void Aboba::Reload() {
 }

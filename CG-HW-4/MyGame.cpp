@@ -16,6 +16,7 @@ MyGame::MyGame() : Game(L"MyGame", 800, 800)
 {
 	auto plane = new PlaneComponent(this, L"..\\src\\textures\\earth.dds", 1000.0f, 1000.0f);
 	Components.push_back(plane);
+
 	auto sphere = new SphereComponent(this);
 	sphere->SetPosition(XMFLOAT3(0, 0.55, 0));
 	Components.push_back(sphere);
@@ -29,10 +30,10 @@ MyGame::MyGame() : Game(L"MyGame", 800, 800)
 	gift2->SetScale(XMFLOAT3(3.0f, 3.0f, 3.0f));
 	Components.push_back(gift2);
 
-	auto gift3 = new Aboba(this, L"..\\src\\textures\\gift.obj");
-	gift3->SetPosition(XMFLOAT3(0.0, -0.6, 5.0));
+	// auto gift3 = new Aboba(this, L"..\\src\\textures\\gift.obj");
+	// gift3->SetPosition(XMFLOAT3(0.0, -0.6, 5.0));
 	//gift3->SetScale(XMFLOAT3(3.0f, 3.0f, 3.0f));
-	Components.push_back(gift3);
+	// Components.push_back(gift3);
 }
 
 MyGame::~MyGame()

@@ -57,6 +57,7 @@ private:
 	XMVECTOR attachedOffset;
 	XMVECTOR attachedDirection;
 	float attachedDistance;
+	XMVECTOR attachedInitialRotation;
 
 	void RotateByCenter(float angle);
 public:
@@ -67,6 +68,8 @@ public:
 	void Draw() override;
 	void Initialize() override;
 	void Update() override;
+
+	void SetAttachedInitialRotation(XMVECTOR rot);
 
 	void Reload() override;
 	void SetPosition(const XMFLOAT3& newPosition);

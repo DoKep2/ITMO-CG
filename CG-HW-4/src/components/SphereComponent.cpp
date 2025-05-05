@@ -186,6 +186,31 @@ void SphereComponent::Draw() {
 }
 
 void SphereComponent::Update() {
+    if (isGrounded && game->InputDev->IsKeyDown(Keys::Space)) {
+        velocity = XMVectorSetY(velocity, jumpStrength);
+        isGrounded = false;
+    }
+
+    XMVECTOR gravity = XMVectorSet(0, -2.8f, 0, 0);
+    velocity = XMVectorAdd(velocity, XMVectorScale(gravity, 0.001f));
+
+    // Обновляем позицию шара
+    XMVECTOR newPosition = XMVectorAdd(GetPosition(), XMVectorScale(velocity, 0.001f));
+    SetPosition(newPosition);
+
+    // Проверка на "землю" (предположим, что земля на Y = 0)
+    if (newPosition.m128_f32[1] <= 0.0f) {
+    XMVECTOR correctedPosition = XMVectorSetY(newPosition, 0.0f);
+    SetPosition(correctedPosition);
+    velocity = XMVectorSetY(velocity, 0.0f);
+    isGrounded = true;
+    }
+
+    if (velocity.m128_f32[1] > 0) {
+        velocity = XMVectorSetY(velocity, velocity.m128_f32[1] * 0.98f); // плавное замедление вверх
+    }
+
+
     HandleInput();
 
     XMVECTOR forward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
@@ -245,6 +270,7 @@ void SphereComponent::CheckCollision(Aboba* aboba) const {
     box.Center = XMFLOAT3(itemPos.m128_f32[0], itemPos.m128_f32[1], itemPos.m128_f32[2]);
     box.Extents = XMFLOAT3(0.330583006f, 0.4085145f, 0.33058351f);
 
+    // Проверка коллизии без учета поворота шара
     if (sphere.Intersects(box) && !aboba->GetIsAttached()) {
         XMVECTOR itemPosVec = itemPos;
         XMVECTOR ballPosVec = ballPos;
@@ -255,18 +281,18 @@ void SphereComponent::CheckCollision(Aboba* aboba) const {
         // Нормализуем направление (вектор от центра шара к предмету)
         XMVECTOR directionToItem = XMVector3Normalize(worldOffset);
 
-        // Величина "впивания" внутрь шара
-        float penetrationDepth = 0.5f; // можешь поиграться со значением
+        // Величина "впивания" внутрь шара (можно настроить)
+        float penetrationDepth = 0.0f; // можно экспериментировать с этим значением
 
         // Делаем шаг назад в сторону центра шара
         XMVECTOR adjustedOffset = XMVectorSubtract(worldOffset, XMVectorScale(directionToItem, penetrationDepth));
 
-        // Преобразуем offset в локальные координаты шара (с учётом текущего поворота)
-        XMMATRIX invRotationMatrix = XMMatrixInverse(nullptr, XMMatrixRotationQuaternion(GetRotation()));
-        XMVECTOR localOffset = XMVector3Transform(adjustedOffset, invRotationMatrix);
+        // Сохраняем данные прикрепления (без учета поворота)
 
-        // Сохраняем данные прикрепления
-        aboba->SetAttachedOffset(localOffset);
+        if(!aboba->GetIsAttached()) {
+            aboba->SetAttachedInitialRotation(GetRotation());
+        }
+        aboba->SetAttachedOffset(adjustedOffset);
         aboba->SetIsAttached(true);
         aboba->SetAttachedSphere(this);
     }
@@ -318,7 +344,7 @@ void SphereComponent::HandleInput() {
     if (!XMVector3Equal(inputDir, XMVectorZero())) {
         inputDir = XMVector3Normalize(inputDir);
 
-        float maxSpeed = 0.1f;
+        float maxSpeed = 0.3f;
         float currentSpeed = XMVectorGetX(XMVector3Length(velocity));
         float speedFactor = 1.0f - std::min(currentSpeed / maxSpeed, 1.0f);
         float actualAccel = acceleration * speedFactor;
@@ -340,10 +366,9 @@ void SphereComponent::HandleInput() {
     XMVECTOR rollAxis = XMVector3Cross(moveDir, up);
 
     float moveLen = XMVectorGetX(XMVector3Length(velocity));
-    if (moveLen > 0.0001f) {
+    if (moveLen > 0.0001f && !XMVector3Equal(rollAxis, XMVectorZero())) {
         float rollAngle = moveLen;
         XMVECTOR rollQuat = XMQuaternionRotationAxis(-rollAxis, rollAngle);
-
         rotQuat = XMQuaternionMultiply(rotQuat, rollQuat);
     }
 
@@ -488,6 +513,10 @@ void SphereComponent::SetPosition(const XMFLOAT3& newPosition) {
     mat = XMMatrixScalingFromVector(scale) *
             XMMatrixRotationQuaternion(rotation) *
             XMMatrixTranslationFromVector(posVec);
+}
+
+void SphereComponent::SetPosition(const XMVECTOR& newPosition) {
+    SetPosition(XMFLOAT3(newPosition.m128_f32[0], newPosition.m128_f32[1], newPosition.m128_f32[2]));
 }
 
 void SphereComponent::SetRotation(const XMFLOAT4& newRotationQuat) {

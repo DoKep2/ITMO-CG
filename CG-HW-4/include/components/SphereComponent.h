@@ -48,7 +48,6 @@ private:
 
 	XMMATRIX mat = XMMatrixIdentity();
 
-	float moveSpeed = 0.05f;
 	float rotationSpeed = XMConvertToRadians(90.0f); // 90°/сек
 	float totalRoll = 0.0f;
 	float heading = 0.0f; // текущий угол поворота в радианах
@@ -57,6 +56,8 @@ private:
 	float friction = 0.98f;       // ближе к 1.0 — плавнее торможение
 
 	std::wstring texturePath;
+	bool isGrounded = true;
+	float jumpStrength = 0.3f;
 
 	void RotateByCenter(float angle);
 public:
@@ -72,6 +73,7 @@ public:
 
 	void Reload() override;
 	void SetPosition(const XMFLOAT3& newPosition);
+	void SetPosition(const XMVECTOR& newPosition);
 	void SetRotation(const XMFLOAT4& newRotationQuat);
 	XMVECTOR GetPosition() const;
 	XMVECTOR GetRotation() const;
